@@ -6,7 +6,7 @@ import { useServer } from '@/context/server';
 import { usePrompt } from '@/context/prompt';
 import { useCommands } from '@/context/command';
 import { createSdk, type OpenCodeSdk } from '@/lib/sdk';
-import type { Message } from '@/types/message';
+import type { Message, MessageWithParts } from '@/types/message';
 import type { Part } from '@/types/part';
 import { SessionHeader } from '@/components/session/session-header';
 import { MessageTimeline } from '@/components/session/message-timeline';
@@ -97,15 +97,23 @@ const toolbarStyle = css`
 `;
 
 export function SessionPage() {
-  const { id } = useParams();
+  const { id, dir } = useParams<{ id?: string; dir?: string }>();
   const navigate = useNavigate();
   const { t } = useI18n();
   const { active } = useServer();
   const prompt = usePrompt();
 
+  const directory = useMemo(() => {
+    try {
+      return dir ? atob(dir) : undefined;
+    } catch {
+      return dir;
+    }
+  }, [dir]);
+
   const sdk = useMemo(
-    () => createSdk(active.url, active.authToken && active.password ? { password: active.password } : undefined),
-    [active.url, active.authToken, active.password],
+    () => createSdk(active.url, active.authToken && active.password ? { password: active.password } : undefined, directory),
+    [active.url, active.authToken, active.password, directory],
   );
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -189,15 +197,23 @@ export function SessionPage() {
     setError(null);
 
     sdk.session.message
-      .list(id, { signal: controller.signal })
+      .list(id, { signal: controller.signal, limit: 55 })
       .then((data) => {
         if (controller.signal.aborted) return;
-        const msgList = (data ?? []) as Message[];
+        const items = (data ?? []) as MessageWithParts[];
+        const msgList = items.map(item => item.info).filter((m): m is Message => !!m?.id);
+        const partsMap = new Map<string, Part[]>();
+        for (const item of items) {
+          if (item.info?.id) {
+            partsMap.set(item.info.id, item.parts ?? []);
+          }
+        }
         msgList.sort((a, b) => {
-          if (a.time.created !== b.time.created) return a.time.created - b.time.created;
+          if (a.time?.created !== b.time?.created) return (a.time?.created ?? 0) - (b.time?.created ?? 0);
           return a.id.localeCompare(b.id);
         });
         setMessages(msgList);
+        setPartsByMessage(partsMap);
         setLoading(false);
       })
       .catch((err) => {
@@ -218,28 +234,6 @@ export function SessionPage() {
     };
   }, [id, sdk]);
 
-  useEffect(() => {
-    if (!id) return;
-
-    const loadParts = async () => {
-      const newParts = new Map<string, Part[]>();
-      for (const msg of messages) {
-        try {
-          const msgData = (await sdk.session.message.get(id, msg.id)) as { parts?: Part[] } | undefined;
-          const parts = msgData?.parts ?? [];
-          newParts.set(msg.id, parts);
-        } catch {
-          newParts.set(msg.id, []);
-        }
-      }
-      setPartsByMessage(newParts);
-    };
-
-    if (messages.length > 0) {
-      loadParts();
-    }
-  }, [id, messages, sdk]);
-
   const handleSend = useCallback(async () => {
     if (!id) return;
     const text = prompt.getText();
@@ -250,12 +244,20 @@ export function SessionPage() {
 
     try {
       await prompt.send(id, sdk);
-      const data = (await sdk.session.message.list(id)) as Message[];
-      data.sort((a, b) => {
-        if (a.time.created !== b.time.created) return a.time.created - b.time.created;
+      const data = (await sdk.session.message.list(id, { limit: 55 })) as MessageWithParts[];
+      const msgList = data.map(item => item.info).filter((m): m is Message => !!m?.id);
+      const partsMap = new Map<string, Part[]>();
+      for (const item of data) {
+        if (item.info?.id) {
+          partsMap.set(item.info.id, item.parts ?? []);
+        }
+      }
+      msgList.sort((a, b) => {
+        if (a.time?.created !== b.time?.created) return (a.time?.created ?? 0) - (b.time?.created ?? 0);
         return a.id.localeCompare(b.id);
       });
-      setMessages(data);
+      setMessages(msgList);
+      setPartsByMessage(partsMap);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send message');
     }

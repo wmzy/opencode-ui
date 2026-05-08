@@ -230,7 +230,7 @@ export function MessageTimeline({
             )}
             {turnPairs.map((pair) => {
               const isStreaming = pair.assistants.some(
-                (a) => a.time.completed === undefined || a.id === streamingMessageID,
+                (a) => a.time?.completed === undefined || a.id === streamingMessageID,
               );
               const assistantPartsMap = new Map<string, Part[]>();
               for (const a of pair.assistants) {
@@ -252,6 +252,7 @@ export function MessageTimeline({
                       assistantMessages={pair.assistants}
                       assistantParts={assistantPartsMap}
                       isStreaming={isStreaming}
+                      summaryDiffs={(pair.user as import('@/types/message').UserMessage).summary?.diffs}
                     />
                   )}
                 </div>

@@ -153,6 +153,7 @@ export type SessionTurnProps = {
   assistantParts?: Map<string, Part[]>;
   actions?: UserActions;
   isStreaming?: boolean;
+  summaryDiffs?: Array<import('@/types/common').FileDiff>;
   className?: string;
 };
 
@@ -223,6 +224,7 @@ export function SessionTurn({
   assistantParts = new Map(),
   actions,
   isStreaming = false,
+  summaryDiffs,
   className,
 }: SessionTurnProps) {
   const isUser = message.role === 'user';
@@ -257,15 +259,15 @@ export function SessionTurn({
 
   const duration = useMemo(() => {
     if (isUser || assistantMessages.length === 0) return undefined;
-    const start = message.time.created;
+    const start = message.time?.created;
     const end = assistantMessages.reduce<number | undefined>((max, m) => {
-      const c = m.time.completed;
+      const c = m.time?.completed;
       if (typeof c !== 'number') return max;
       return max === undefined ? c : Math.max(max, c);
     }, undefined);
-    if (typeof end !== 'number' || end < start) return undefined;
+    if (typeof start !== 'number' || typeof end !== 'number' || end < start) return undefined;
     return end - start;
-  }, [isUser, message.time.created, assistantMessages]);
+  }, [isUser, message.time?.created, assistantMessages]);
 
   const hasAssistantContent = allAssistantParts.length > 0 || isStreaming;
 
@@ -296,7 +298,7 @@ export function SessionTurn({
             </>
           )}
           <span>·</span>
-          <span>{new Date(userMsg.time.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+          <span>{new Date(userMsg.time?.created ?? Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
         </div>
         {actions?.revert && (
           <div className={actionsStyle}>

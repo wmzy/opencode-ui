@@ -346,12 +346,12 @@ export function createSdk(
       list: (opts) =>
         request("GET", "/file", {
           ...opts,
-          query: withDirectory({ ...opts?.query }),
+          query: withDirectory({ path: opts.path, ...opts?.query }),
         }),
       content: (opts) =>
         request("GET", "/file/content", {
           ...opts,
-          query: withDirectory({ ...opts?.query }),
+          query: withDirectory({ path: opts.path, ...opts?.query }),
         }),
       status: (opts) =>
         request("GET", "/file/status", {
