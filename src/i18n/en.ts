@@ -1,0 +1,71 @@
+import { registerTranslations } from '@/context/language';
+
+registerTranslations('en', {
+  'app.name': 'OpenCode',
+  'app.tagline': 'AI Coding Agent',
+
+  'nav.home': 'Home',
+  'nav.settings': 'Settings',
+  'nav.sessions': 'Sessions',
+  'nav.files': 'Files',
+  'nav.terminal': 'Terminal',
+
+  'sidebar.new_session': 'New Session',
+  'sidebar.sessions': 'Sessions',
+  'sidebar.projects': 'Projects',
+  'sidebar.no_sessions': 'No sessions yet',
+  'sidebar.search': 'Search sessions...',
+
+  'session.new': 'New Chat',
+  'session.empty': 'Start a new conversation',
+  'session.placeholder': 'Type a message...',
+  'session.send': 'Send',
+  'session.abort': 'Stop',
+  'session.retry': 'Retry',
+  'session.fork': 'Fork',
+  'session.share': 'Share',
+  'session.archive': 'Archive',
+  'session.delete': 'Delete',
+
+  'message.user': 'You',
+  'message.assistant': 'Assistant',
+  'message.copy': 'Copy',
+  'message.copied': 'Copied!',
+  'message.reasoning': 'Thinking...',
+  'message.tool_call': 'Tool Call',
+  'message.tool_running': 'Running...',
+  'message.tool_completed': 'Completed',
+  'message.tool_error': 'Error',
+
+  'settings.title': 'Settings',
+  'settings.general': 'General',
+  'settings.theme': 'Theme',
+  'settings.language': 'Language',
+  'settings.keybinds': 'Keyboard Shortcuts',
+  'settings.providers': 'Providers',
+  'settings.models': 'Models',
+  'settings.about': 'About',
+
+  'theme.dark': 'Dark',
+  'theme.light': 'Light',
+  'theme.system': 'System',
+
+  'error.title': 'Something went wrong',
+  'error.retry': 'Retry',
+  'error.connection': 'Unable to connect to server',
+  'error.not_found': 'Page not found',
+
+  'common.loading': 'Loading...',
+  'common.save': 'Save',
+  'common.cancel': 'Cancel',
+  'common.close': 'Close',
+  'common.confirm': 'Confirm',
+  'common.delete': 'Delete',
+  'common.edit': 'Edit',
+  'common.search': 'Search',
+  'common.no_results': 'No results',
+  'common.more': 'More',
+
+  'command.palette': 'Command Palette',
+  'command.search': 'Type a command...',
+});

@@ -1,0 +1,375 @@
+import { css, cx } from '@linaria/core';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useI18n } from '@/context/language';
+import { useServer } from '@/context/server';
+import { usePrompt } from '@/context/prompt';
+import { useCommands } from '@/context/command';
+import { createSdk, type OpenCodeSdk } from '@/lib/sdk';
+import type { Message } from '@/types/message';
+import type { Part } from '@/types/part';
+import { SessionHeader } from '@/components/session/session-header';
+import { MessageTimeline } from '@/components/session/message-timeline';
+import { SessionComposer } from '@/components/session/session-composer';
+import { SessionSidePanel } from '@/components/session/session-side-panel';
+import { SessionPermissionDock } from '@/components/session/session-permission-dock';
+import { SessionQuestionDock } from '@/components/session/session-question-dock';
+import { SessionTodoDock } from '@/components/session/session-todo-dock';
+import { TerminalPanel } from '@/components/terminal/terminal-panel';
+import { Spinner } from '@/components/ui/spinner';
+import { Button } from '@/components/ui/button';
+
+const sessionContainer = css`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+`;
+
+const loadingOverlay = css`
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--color-text-tertiary);
+`;
+
+const emptyState = css`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 32px;
+  text-align: center;
+`;
+
+const emptyIcon = css`
+  font-size: 4rem;
+  opacity: 0.4;
+`;
+
+const emptyTitle = css`
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-text);
+`;
+
+const emptySubtitle = css`
+  font-size: 0.9rem;
+  color: var(--color-text-tertiary);
+  max-width: 420px;
+  line-height: 1.6;
+`;
+
+const errorBanner = css`
+  padding: 10px 16px;
+  background: color-mix(in srgb, var(--color-error) 10%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-error) 30%, transparent);
+  color: var(--color-error);
+  font-size: 13px;
+`;
+
+const sessionBodyStyle = css`
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+`;
+
+const messageAreaStyle = css`
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+`;
+
+const toolbarStyle = css`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+`;
+
+export function SessionPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { t } = useI18n();
+  const { active } = useServer();
+  const prompt = usePrompt();
+
+  const sdk = useMemo(
+    () => createSdk(active.url, active.authToken && active.password ? { password: active.password } : undefined),
+    [active.url, active.authToken, active.password],
+  );
+
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [partsByMessage, setPartsByMessage] = useState<Map<string, Part[]>>(new Map());
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [sessionData, setSessionData] = useState<unknown>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const [terminalOpen, setTerminalOpen] = useState(false);
+  const [terminalHeight, setTerminalHeight] = useState(200);
+  const [sidePanelOpen, setSidePanelOpen] = useState(false);
+  const { registerCommand } = useCommands();
+
+  useEffect(() => {
+    const unregisters: (() => void)[] = [];
+
+    unregisters.push(registerCommand({
+      id: 'session.undo',
+      label: 'Undo Last Message',
+      group: 'Session',
+      action: async () => { if (!id) return; },
+    }));
+
+    unregisters.push(registerCommand({
+      id: 'session.share',
+      label: 'Share Session',
+      group: 'Session',
+      action: async () => {
+        if (!id) return;
+        try {
+          const result = await sdk.session.share(id);
+          if (typeof result === 'string') {
+            await navigator.clipboard.writeText(result);
+          }
+        } catch {}
+      },
+    }));
+
+    unregisters.push(registerCommand({
+      id: 'model.choose',
+      label: 'Choose Model',
+      group: 'Model',
+      shortcut: "mod+'",
+      action: () => {},
+    }));
+
+    unregisters.push(registerCommand({
+      id: 'agent.cycle',
+      label: 'Cycle Agent',
+      group: 'Model',
+      shortcut: 'mod+.',
+      action: () => {},
+    }));
+
+    unregisters.push(registerCommand({
+      id: 'terminal.toggle',
+      label: 'Toggle Terminal',
+      group: 'Terminal',
+      shortcut: 'ctrl+`',
+      action: () => { setTerminalOpen(prev => !prev); },
+    }));
+
+    unregisters.push(registerCommand({
+      id: 'terminal.new',
+      label: 'New Terminal',
+      group: 'Terminal',
+      shortcut: 'ctrl+alt+t',
+      action: () => { setTerminalOpen(true); },
+    }));
+
+    return () => unregisters.forEach(fn => fn());
+  }, [id, sdk, registerCommand]);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    setLoading(true);
+    setError(null);
+
+    sdk.session.message
+      .list(id, { signal: controller.signal })
+      .then((data) => {
+        if (controller.signal.aborted) return;
+        const msgList = (data ?? []) as Message[];
+        msgList.sort((a, b) => {
+          if (a.time.created !== b.time.created) return a.time.created - b.time.created;
+          return a.id.localeCompare(b.id);
+        });
+        setMessages(msgList);
+        setLoading(false);
+      })
+      .catch((err) => {
+        if (controller.signal.aborted) return;
+        setError(err instanceof Error ? err.message : 'Failed to load messages');
+        setLoading(false);
+      });
+
+    sdk.session
+      .get(id, { signal: controller.signal })
+      .then((data) => {
+        if (!controller.signal.aborted) setSessionData(data);
+      })
+      .catch(() => {});
+
+    return () => {
+      controller.abort();
+    };
+  }, [id, sdk]);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const loadParts = async () => {
+      const newParts = new Map<string, Part[]>();
+      for (const msg of messages) {
+        try {
+          const msgData = (await sdk.session.message.get(id, msg.id)) as { parts?: Part[] } | undefined;
+          const parts = msgData?.parts ?? [];
+          newParts.set(msg.id, parts);
+        } catch {
+          newParts.set(msg.id, []);
+        }
+      }
+      setPartsByMessage(newParts);
+    };
+
+    if (messages.length > 0) {
+      loadParts();
+    }
+  }, [id, messages, sdk]);
+
+  const handleSend = useCallback(async () => {
+    if (!id) return;
+    const text = prompt.getText();
+    if (!text.trim()) return;
+
+    prompt.setText('');
+    setError(null);
+
+    try {
+      await prompt.send(id, sdk);
+      const data = (await sdk.session.message.list(id)) as Message[];
+      data.sort((a, b) => {
+        if (a.time.created !== b.time.created) return a.time.created - b.time.created;
+        return a.id.localeCompare(b.id);
+      });
+      setMessages(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send message');
+    }
+  }, [id, sdk, prompt]);
+
+  const handleStop = useCallback(async () => {
+    if (!id) return;
+    await prompt.abort(id, sdk);
+  }, [id, sdk, prompt]);
+
+  const handleArchive = useCallback(async () => {
+    if (!id) return;
+    try {
+      await sdk.session.update(id, { body: { time: { archived: Date.now() } } });
+      navigate('/');
+    } catch {}
+  }, [id, sdk, navigate]);
+
+  const handleTitleChange = useCallback(async (newTitle: string) => {
+    if (!id) return;
+    try {
+      await sdk.session.update(id, { body: { title: newTitle } });
+    } catch {}
+  }, [id, sdk]);
+
+  const isStreaming = prompt.state.streaming;
+
+  const tokenUsage = useMemo(() => {
+    let input = 0;
+    let output = 0;
+    for (const msg of messages) {
+      if (msg.role === 'assistant') {
+        const a = msg as import('@/types/message').AssistantMessage;
+        input += a.tokens?.input ?? 0;
+        output += a.tokens?.output ?? 0;
+      }
+    }
+    return { input, output };
+  }, [messages]);
+
+  if (!id) {
+    return (
+      <div className={sessionContainer}>
+        <div className={emptyState}>
+          <div className={emptyIcon}>💬</div>
+          <div className={emptyTitle}>{t('session.new')}</div>
+          <div className={emptySubtitle}>
+            Start a conversation with the AI assistant. Send a message to begin.
+          </div>
+        </div>
+        <SessionComposer
+          value={prompt.getText()}
+          onChange={prompt.setText}
+          onSend={handleSend}
+          streaming={isStreaming}
+          placeholder={t('session.placeholder')}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className={sessionContainer}>
+      <SessionHeader
+        session={sessionData as import('@/types/session').Session | undefined}
+        onArchive={handleArchive}
+        onTitleChange={handleTitleChange}
+        tokenUsage={tokenUsage}
+      />
+      {error && <div className={errorBanner}>{error}</div>}
+      <div className={sessionBodyStyle}>
+        <div className={messageAreaStyle}>
+          {loading ? (
+            <div className={loadingOverlay}>
+              <Spinner size="lg" color="muted" />
+              <span>Loading messages...</span>
+            </div>
+          ) : (
+            <MessageTimeline
+              messages={messages}
+              partsByMessage={partsByMessage}
+              streamingMessageID={isStreaming ? 'streaming' : undefined}
+            />
+          )}
+        </div>
+        {sidePanelOpen && (
+          <SessionSidePanel onClose={() => setSidePanelOpen(false)} />
+        )}
+      </div>
+      <div className={toolbarStyle}>
+        <Button variant="ghost" size="sm" onClick={() => setSidePanelOpen(prev => !prev)}>
+          📁
+        </Button>
+        <Button variant="ghost" size="sm" onClick={() => setTerminalOpen(prev => !prev)}>
+          ⌨
+        </Button>
+      </div>
+      <SessionTodoDock sessionId={id} />
+      <SessionPermissionDock sessionId={id} />
+      <SessionQuestionDock sessionId={id} />
+      <SessionComposer
+        value={prompt.getText()}
+        onChange={prompt.setText}
+        onSend={handleSend}
+        onStop={handleStop}
+        streaming={isStreaming}
+        placeholder={t('session.placeholder')}
+      />
+      {terminalOpen && (
+        <TerminalPanel
+          height={terminalHeight}
+          onHeightChange={setTerminalHeight}
+        />
+      )}
+    </div>
+  );
+}

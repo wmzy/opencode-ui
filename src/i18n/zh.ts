@@ -1,0 +1,71 @@
+import { registerTranslations } from '@/context/language';
+
+registerTranslations('zh', {
+  'app.name': 'OpenCode',
+  'app.tagline': 'AI 编程助手',
+
+  'nav.home': '首页',
+  'nav.settings': '设置',
+  'nav.sessions': '会话',
+  'nav.files': '文件',
+  'nav.terminal': '终端',
+
+  'sidebar.new_session': '新建会话',
+  'sidebar.sessions': '会话列表',
+  'sidebar.projects': '项目',
+  'sidebar.no_sessions': '暂无会话',
+  'sidebar.search': '搜索会话...',
+
+  'session.new': '新对话',
+  'session.empty': '开始新的对话',
+  'session.placeholder': '输入消息...',
+  'session.send': '发送',
+  'session.abort': '停止',
+  'session.retry': '重试',
+  'session.fork': '分支',
+  'session.share': '分享',
+  'session.archive': '归档',
+  'session.delete': '删除',
+
+  'message.user': '你',
+  'message.assistant': '助手',
+  'message.copy': '复制',
+  'message.copied': '已复制！',
+  'message.reasoning': '思考中...',
+  'message.tool_call': '工具调用',
+  'message.tool_running': '运行中...',
+  'message.tool_completed': '已完成',
+  'message.tool_error': '错误',
+
+  'settings.title': '设置',
+  'settings.general': '通用',
+  'settings.theme': '主题',
+  'settings.language': '语言',
+  'settings.keybinds': '快捷键',
+  'settings.providers': '服务商',
+  'settings.models': '模型',
+  'settings.about': '关于',
+
+  'theme.dark': '深色',
+  'theme.light': '浅色',
+  'theme.system': '跟随系统',
+
+  'error.title': '出了点问题',
+  'error.retry': '重试',
+  'error.connection': '无法连接到服务器',
+  'error.not_found': '页面未找到',
+
+  'common.loading': '加载中...',
+  'common.save': '保存',
+  'common.cancel': '取消',
+  'common.close': '关闭',
+  'common.confirm': '确认',
+  'common.delete': '删除',
+  'common.edit': '编辑',
+  'common.search': '搜索',
+  'common.no_results': '无结果',
+  'common.more': '更多',
+
+  'command.palette': '命令面板',
+  'command.search': '输入命令...',
+});
