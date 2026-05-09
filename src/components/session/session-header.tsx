@@ -85,6 +85,29 @@ const actionsGroupStyle = css`
   flex-shrink: 0;
 `;
 
+const hamburgerBtnStyle = css`
+  display: none;
+
+  @media (max-width: 768px) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: var(--color-text-secondary);
+
+    &:hover {
+      background: var(--color-bg-tertiary);
+      color: var(--color-text);
+    }
+  }
+`;
+
 const toggleBtnStyle = css`
   display: flex;
   align-items: center;
@@ -194,6 +217,7 @@ export type SessionHeaderProps = {
   terminalOpen?: boolean;
   onToggleSidePanel?: () => void;
   onToggleTerminal?: () => void;
+  onToggleSidebar?: () => void;
   modelId?: string;
   className?: string;
 };
@@ -207,6 +231,7 @@ export function SessionHeader({
   terminalOpen = false,
   onToggleSidePanel,
   onToggleTerminal,
+  onToggleSidebar,
   modelId,
   className,
 }: SessionHeaderProps) {
@@ -308,6 +333,20 @@ export function SessionHeader({
 
   return (
     <div className={cx(headerStyle, className)}>
+      {onToggleSidebar && (
+        <button
+          className={hamburgerBtnStyle}
+          onClick={onToggleSidebar}
+          aria-label="Toggle sidebar"
+          type="button"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+            <line x1="2" y1="4" x2="14" y2="4" />
+            <line x1="2" y1="8" x2="14" y2="8" />
+            <line x1="2" y1="12" x2="14" y2="12" />
+          </svg>
+        </button>
+      )}
       {editing ? (
         <input
           ref={inputRef}

@@ -1,5 +1,5 @@
 import { css } from '@linaria/core';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useI18n } from '@/context/language';
 import { useServer } from '@/context/server';
@@ -92,6 +92,7 @@ export function SessionPage() {
   const { t } = useI18n();
   const { active } = useServer();
   const prompt = usePrompt();
+  const { onToggleSidebar } = useOutletContext<{ activeSessionId?: string; onToggleSidebar?: () => void }>();
 
   const directory = useMemo(() => {
     try {
@@ -287,6 +288,7 @@ export function SessionPage() {
   if (!id) {
     return (
       <div className={sessionContainer}>
+        <SessionHeader onToggleSidebar={onToggleSidebar} />
         <div className={emptyState}>
           <div className={emptyIcon}>💬</div>
           <div className={emptyTitle}>{t('session.new')}</div>
@@ -315,6 +317,7 @@ export function SessionPage() {
         terminalOpen={terminalOpen}
         onToggleSidePanel={() => setSidePanelOpen(prev => !prev)}
         onToggleTerminal={() => setTerminalOpen(prev => !prev)}
+        onToggleSidebar={onToggleSidebar}
       />
       {error && <div className={errorBanner}>{error}</div>}
       <div className={sessionBodyStyle}>

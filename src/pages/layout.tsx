@@ -183,10 +183,9 @@ export function LayoutPage() {
     return (
       <FileProvider directory={currentPath || undefined}>
         <div className={layoutContainer}>
-          <SidebarRail onSettings={openSettings} />
-          <MobileNav open={layout.sidebarOpen} onClose={toggleSidebar} project={currentProject} projectSdk={projectSdk} />
+          <MobileNav open={layout.sidebarOpen} onClose={toggleSidebar} onSettings={openSettings} project={currentProject} projects={projects} currentPath={currentPath} projectSdk={projectSdk} />
           <div className={mainContent}>
-            <Outlet context={{ activeSessionId: layout.activeSessionId }} />
+            <Outlet context={{ activeSessionId: layout.activeSessionId, onToggleSidebar: toggleSidebar }} />
           </div>
           <SettingsDialog open={settingsOpen} onClose={closeSettings} />
           <CommandPalette />
@@ -206,7 +205,7 @@ export function LayoutPage() {
         </div>
 
         <div className={mainContent}>
-          <Outlet context={{ activeSessionId: layout.activeSessionId }} />
+          <Outlet context={{ activeSessionId: layout.activeSessionId, onToggleSidebar: toggleSidebar }} />
         </div>
         <SettingsDialog open={settingsOpen} onClose={closeSettings} />
         <CommandPalette />
