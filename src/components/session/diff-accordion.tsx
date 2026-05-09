@@ -342,7 +342,7 @@ function DiffItem({ diff }: { diff: FileDiff }) {
           <span className={diffFilenameStyle}>{filename}</span>
         </span>
         <span className={diffMetaStyle}>
-          <DiffChanges changes={diff} variant="bars" />
+          <DiffChanges changes={diff} />
           <svg
             className={cx(chevronStyle, isExpanded && chevronExpandedStyle)}
             viewBox="0 0 20 20"
