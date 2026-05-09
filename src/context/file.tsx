@@ -44,8 +44,13 @@ function normalizePath(p: string): string {
   return p.replace(/[\\/]+$/, '').replaceAll('\\', '/');
 }
 
-export function FileProvider({ children }: { children: ReactNode }) {
-  const { client } = useSdk();
+export function FileProvider({ children, directory }: { children: ReactNode; directory?: string }) {
+  const { client, getSdk } = useSdk();
+
+  const sdk = useMemo(
+    () => (directory ? getSdk(directory) : client),
+    [directory, getSdk, client],
+  );
 
   const dirMapRef = useRef<Map<string, FileNode[]>>(new Map());
   const dirStateRef = useRef<Map<string, DirState>>(new Map());
@@ -125,7 +130,7 @@ export function FileProvider({ children }: { children: ReactNode }) {
       bump();
 
       try {
-        const nodes = (await client.file.list({ path: key })) as FileNode[];
+        const nodes = (await sdk.file.list({ path: key })) as FileNode[];
         const sorted = [...(nodes ?? [])].sort((a, b) => {
           if (a.type !== b.type) return a.type === 'directory' ? -1 : 1;
           return a.name.localeCompare(b.name);
@@ -145,7 +150,7 @@ export function FileProvider({ children }: { children: ReactNode }) {
       }
       bump();
     },
-    [client, bump],
+    [sdk, bump],
   );
 
   const getContent = useCallback(
@@ -166,7 +171,7 @@ export function FileProvider({ children }: { children: ReactNode }) {
       bump();
 
       try {
-        const data = (await client.file.content({ path: key })) as FileContent;
+        const data = (await sdk.file.content({ path: key })) as FileContent;
         fileCacheRef.current.set(key, {
           content: data,
           loading: false,
@@ -181,18 +186,26 @@ export function FileProvider({ children }: { children: ReactNode }) {
       }
       bump();
     },
-    [client, bump],
+    [sdk, bump],
   );
 
   const refreshGitStatus = useCallback(async () => {
     try {
-      const status = (await client.file.status()) as FileChange[];
+      const status = (await sdk.file.status()) as FileChange[];
       gitStatusRef.current = status ?? [];
     } catch {
       gitStatusRef.current = [];
     }
     bump();
-  }, [client, bump]);
+  }, [sdk, bump]);
+
+  useEffect(() => {
+    dirMapRef.current.clear();
+    dirStateRef.current.clear();
+    fileCacheRef.current.clear();
+    gitStatusRef.current = [];
+    bump();
+  }, [directory, bump]);
 
   useEffect(() => {
     void tree.expand('.');

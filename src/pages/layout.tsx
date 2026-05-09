@@ -5,6 +5,7 @@ import { useLayout } from '@/context/layout';
 import { useSdk } from '@/context/sdk';
 import { useCommands } from '@/context/command';
 import { useIsMobile } from '@/hooks';
+import { FileProvider } from '@/context/file';
 import { SidebarRail } from '@/components/layout/sidebar-rail';
 import { SidebarPanel } from '@/components/layout/sidebar-panel';
 import { MobileNav } from '@/components/layout/mobile-nav';
@@ -180,32 +181,36 @@ export function LayoutPage() {
 
   if (isMobile) {
     return (
+      <FileProvider directory={currentPath || undefined}>
+        <div className={layoutContainer}>
+          <SidebarRail onSettings={openSettings} />
+          <MobileNav open={layout.sidebarOpen} onClose={toggleSidebar} project={currentProject} projectSdk={projectSdk} />
+          <div className={mainContent}>
+            <Outlet context={{ activeSessionId: layout.activeSessionId }} />
+          </div>
+          <SettingsDialog open={settingsOpen} onClose={closeSettings} />
+          <CommandPalette />
+        </div>
+      </FileProvider>
+    );
+  }
+
+  return (
+    <FileProvider directory={currentPath || undefined}>
       <div className={layoutContainer}>
-        <SidebarRail onSettings={openSettings} />
-        <MobileNav open={layout.sidebarOpen} onClose={toggleSidebar} project={currentProject} projectSdk={projectSdk} />
+        <div className={cx(sidebarWrapper, layout.sidebarOpen ? 'expanded' : 'collapsed')}>
+          <div className={sidebarContent}>
+            <SidebarRail onSettings={openSettings} />
+            {layout.sidebarOpen && <SidebarPanel project={currentProject} projectSdk={projectSdk} />}
+          </div>
+        </div>
+
         <div className={mainContent}>
           <Outlet context={{ activeSessionId: layout.activeSessionId }} />
         </div>
         <SettingsDialog open={settingsOpen} onClose={closeSettings} />
         <CommandPalette />
       </div>
-    );
-  }
-
-  return (
-    <div className={layoutContainer}>
-      <div className={cx(sidebarWrapper, layout.sidebarOpen ? 'expanded' : 'collapsed')}>
-        <div className={sidebarContent}>
-          <SidebarRail onSettings={openSettings} />
-          {layout.sidebarOpen && <SidebarPanel project={currentProject} projectSdk={projectSdk} />}
-        </div>
-      </div>
-
-      <div className={mainContent}>
-        <Outlet context={{ activeSessionId: layout.activeSessionId }} />
-      </div>
-      <SettingsDialog open={settingsOpen} onClose={closeSettings} />
-      <CommandPalette />
-    </div>
+    </FileProvider>
   );
 }

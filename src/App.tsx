@@ -9,7 +9,6 @@ import { LayoutProvider } from '@/context/layout';
 import { I18nProvider } from '@/context/language';
 import { CommandProvider } from '@/context/command';
 import { ThemeProvider } from '@/context/theme';
-import { FileProvider } from '@/context/file';
 import { TerminalProvider } from '@/context/terminal';
 import { SyncProvider } from '@/context/sync';
 import { PromptProvider } from '@/context/prompt';
@@ -33,8 +32,7 @@ export function App() {
                   <LayoutProvider>
                     <I18nProvider>
                       <CommandProvider>
-                        <FileProvider>
-                          <TerminalProvider>
+                        <TerminalProvider>
                             <SyncProvider>
                               <PromptProvider>
                                 <BrowserRouter>
@@ -50,8 +48,7 @@ export function App() {
                                 </BrowserRouter>
                               </PromptProvider>
                             </SyncProvider>
-                          </TerminalProvider>
-                        </FileProvider>
+                        </TerminalProvider>
                       </CommandProvider>
                     </I18nProvider>
                   </LayoutProvider>
