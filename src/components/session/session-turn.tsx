@@ -1,13 +1,29 @@
 import { css, cx } from '@linaria/core';
-import { useMemo, useCallback, useState } from 'react';
+import { useMemo, useCallback } from 'react';
 import type { Message, UserMessage, AssistantMessage } from '@/types/message';
-import type { Part, TextPart, ToolPart, ReasoningPart, FilePart, StepStartPart, StepFinishPart } from '@/types/part';
+import type {
+  Part,
+  TextPart,
+  ToolPart,
+  ReasoningPart,
+  FilePart,
+  StepStartPart,
+  StepFinishPart,
+  CompactionPart,
+  AgentPart,
+  SubtaskPart,
+  PatchPart,
+  SnapshotPart,
+  RetryPart,
+} from '@/types/part';
 import { MessageText } from './message-text';
 import { MessageToolCall } from './message-tool-call';
 import { MessageReasoning } from './message-reasoning';
 import { MessageStep } from './message-step';
 import { MessageFiles } from './message-files';
+import { DiffAccordion } from './diff-accordion';
 import { Spinner } from '@/components/ui/spinner';
+import { ContextToolGroup, isContextGroupTool } from './tool-renderers/context-tool-group';
 
 const turnStyle = css`
   display: flex;
@@ -24,24 +40,13 @@ const assistantTurnStyle = css`
   align-items: flex-start;
 `;
 
-const avatarStyle = css`
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  flex-shrink: 0;
-`;
-
-const userAvatarStyle = css`
+const _userAvatarStyle = css`
   background: var(--color-accent);
   color: white;
   font-weight: 600;
 `;
 
-const assistantAvatarStyle = css`
+const _assistantAvatarStyle = css`
   background: var(--color-bg-tertiary);
   color: var(--color-text-secondary);
   border: 1px solid var(--color-border);
@@ -141,6 +146,80 @@ const errorStyle = css`
   word-break: break-word;
 `;
 
+const compactionStyle = css`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+`;
+
+const compactionLineStyle = css`
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+`;
+
+const compactionLabelStyle = css`
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+`;
+
+const agentBadgeStyle = css`
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-size: 11px;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text-secondary);
+`;
+
+const subtaskStyle = css`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  padding: 4px 0;
+`;
+
+const subtaskIconStyle = css`
+  font-size: 14px;
+`;
+
+const patchStyle = css`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  background: var(--color-bg-tertiary);
+  border-radius: 6px;
+  color: var(--color-text-secondary);
+`;
+
+const snapshotStyle = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+`;
+
+const retryStyle = css`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  background: color-mix(in srgb, var(--color-warning) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 30%, transparent);
+  border-radius: 6px;
+  color: var(--color-warning);
+`;
+
 type UserActions = {
   fork?: (input: { sessionID: string; messageID: string }) => Promise<void> | void;
   revert?: (input: { sessionID: string; messageID: string }) => Promise<void> | void;
@@ -202,6 +281,34 @@ function groupSteps(parts: Part[]): Array<Part | { type: 'step-group'; start: St
   return result;
 }
 
+type StepGroup = { type: 'step-group'; start: StepStartPart; finish?: StepFinishPart };
+type ContextGroup = { type: 'context-group'; parts: ToolPart[] };
+type GroupedItem = Part | StepGroup | ContextGroup;
+
+function groupContextTools(items: Array<Part | StepGroup>): GroupedItem[] {
+  const result: GroupedItem[] = [];
+  let contextBuffer: ToolPart[] = [];
+
+  const flushContext = () => {
+    if (contextBuffer.length > 0) {
+      result.push({ type: 'context-group', parts: [...contextBuffer] });
+      contextBuffer = [];
+    }
+  };
+
+  for (const item of items) {
+    if (item.type === 'tool' && isContextGroupTool(item)) {
+      contextBuffer.push(item as ToolPart);
+    } else {
+      flushContext();
+      result.push(item);
+    }
+  }
+
+  flushContext();
+  return result;
+}
+
 function PartRenderer({ part, streaming }: { part: Part; streaming: boolean }) {
   switch (part.type) {
     case 'text':
@@ -211,6 +318,49 @@ function PartRenderer({ part, streaming }: { part: Part; streaming: boolean }) {
     case 'reasoning':
       return <MessageReasoning part={part as ReasoningPart} streaming={streaming} />;
     case 'file':
+      return null;
+    case 'compaction': {
+      return (
+        <div className={compactionStyle}>
+          <div className={compactionLineStyle} />
+          <span className={compactionLabelStyle}>Context compacted</span>
+          <div className={compactionLineStyle} />
+        </div>
+      );
+    }
+    case 'agent': {
+      const agentPart = part as AgentPart;
+      return <span className={agentBadgeStyle}>{agentPart.name ?? 'Agent'}</span>;
+    }
+    case 'subtask': {
+      const subtaskPart = part as SubtaskPart;
+      return (
+        <div className={subtaskStyle}>
+          <span className={subtaskIconStyle}>⚡</span>
+          <span>{subtaskPart.description ?? 'Subtask'}</span>
+        </div>
+      );
+    }
+    case 'patch': {
+      const patchPart = part as PatchPart;
+      return (
+        <div className={patchStyle}>
+          <span>📝 Patch applied</span>
+        </div>
+      );
+    }
+    case 'snapshot': {
+      return <div className={snapshotStyle}>📷 Snapshot</div>;
+    }
+    case 'retry': {
+      return (
+        <div className={retryStyle}>
+          <span>⚠️ Retrying...</span>
+        </div>
+      );
+    }
+    case 'step-start':
+    case 'step-finish':
       return null;
     default:
       return null;
@@ -248,7 +398,10 @@ export function SessionTurn({
     return result;
   }, [assistantMessages, assistantParts]);
 
-  const grouped = useMemo(() => groupSteps(allAssistantParts), [allAssistantParts]);
+  const grouped = useMemo(() => {
+    const stepped = groupSteps(allAssistantParts);
+    return groupContextTools(stepped);
+  }, [allAssistantParts]);
 
   const isInterrupted = assistantMessages.some(
     (m) => m.error?.name === 'MessageAbortedError',
@@ -275,7 +428,7 @@ export function SessionTurn({
     actions?.revert?.({ sessionID: message.sessionID, messageID: message.id });
   }, [actions, message.sessionID, message.id]);
 
-  const handleFork = useCallback(() => {
+  const _handleFork = useCallback(() => {
     actions?.fork?.({ sessionID: message.sessionID, messageID: message.id });
   }, [actions, message.sessionID, message.id]);
 
@@ -330,6 +483,15 @@ export function SessionTurn({
                   />
                 );
               }
+              if (typeof item === 'object' && 'type' in item && item.type === 'context-group') {
+                return (
+                  <ContextToolGroup
+                    key={`ctx-${i}`}
+                    parts={item.parts}
+                    isStreaming={isStreaming}
+                  />
+                );
+              }
               const part = item as Part;
               if (part.type === 'text' && !(part as TextPart).text?.trim()) return null;
               return <PartRenderer key={part.id} part={part} streaming={isStreaming} />;
@@ -340,6 +502,9 @@ export function SessionTurn({
             <div className={errorStyle}>
               {typeof assistantError.data?.message === 'string' ? assistantError.data.message : 'An error occurred'}
             </div>
+          )}
+          {summaryDiffs && summaryDiffs.length > 0 && !isStreaming && (
+            <DiffAccordion diffs={summaryDiffs} />
           )}
         </div>
       )}

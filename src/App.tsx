@@ -37,23 +37,23 @@ export function App() {
                           <TerminalProvider>
                             <SyncProvider>
                               <PromptProvider>
-                          <BrowserRouter>
-                            <Routes>
-                              <Route path="/" element={<HomePage />} />
-                              <Route path="/:dir" element={<LayoutPage />}>
-                                <Route index element={<Navigate to="session" replace />} />
-                                <Route path="session" element={<SessionPage />} />
-                                <Route path="session/:id" element={<SessionPage />} />
-                              </Route>
-                              <Route path="*" element={<NotFoundPage />} />
-                            </Routes>
-                          </BrowserRouter>
-                            </PromptProvider>
-                          </SyncProvider>
-                        </TerminalProvider>
-                      </FileProvider>
-                    </CommandProvider>
-                  </I18nProvider>
+                                <BrowserRouter>
+                                  <Routes>
+                                    <Route path="/" element={<HomePage />} />
+                                    <Route path="/:dir" element={<LayoutPage />}>
+                                      <Route index element={<Navigate to="session" replace />} />
+                                      <Route path="session" element={<SessionPage />} />
+                                      <Route path="session/:id" element={<SessionPage />} />
+                                    </Route>
+                                    <Route path="*" element={<NotFoundPage />} />
+                                  </Routes>
+                                </BrowserRouter>
+                              </PromptProvider>
+                            </SyncProvider>
+                          </TerminalProvider>
+                        </FileProvider>
+                      </CommandProvider>
+                    </I18nProvider>
                   </LayoutProvider>
                 </SettingsProvider>
               </GlobalSyncProvider>

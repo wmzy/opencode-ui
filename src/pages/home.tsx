@@ -186,8 +186,8 @@ export function HomePage() {
 
   const statusLabel =
     status === 'connected' ? 'Connected' :
-    status === 'connecting' ? 'Connecting...' :
-    'Disconnected';
+      status === 'connecting' ? 'Connecting...' :
+        'Disconnected';
 
   return (
     <div className={homeContainer}>

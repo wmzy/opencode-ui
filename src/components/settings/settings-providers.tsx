@@ -261,14 +261,14 @@ export function SettingsProviders() {
         open={connectDialog?.open ?? false}
         onClose={() => { setConnectDialog(null); setApiKey(''); }}
         title={`Connect ${connectDialog?.provider.name ?? ''}`}
-        footer={
+        footer={(
           <>
             <Button variant="ghost" onClick={() => { setConnectDialog(null); setApiKey(''); }}>Cancel</Button>
             <Button onClick={handleConnect} disabled={!apiKey.trim() || submitting}>
               {submitting ? 'Connecting...' : 'Connect'}
             </Button>
           </>
-        }
+        )}
       >
         <div className={apiKeyFormStyle}>
           <Input

@@ -4,19 +4,35 @@ import { useFileTree, useFileContent } from '@/context/file';
 import { FileTree } from '@/components/file/file-tree';
 import { FileViewer } from '@/components/file/file-viewer';
 import { DiffViewer } from '@/components/file/diff-viewer';
-import { FileIcon } from '@/components/file/file-icon';
+import { SessionContextTab } from '@/components/session/session-context-tab';
+import { SessionReviewTab } from '@/components/session/session-review-tab';
 import type { FileNode, FileChange } from '@/types/file';
+import type { Message } from '@/types/message';
+import type { Part } from '@/types/part';
+import type { Session } from '@/types/session';
 
 const panelStyle = css`
   display: flex;
   flex-direction: column;
   width: 320px;
   min-width: 280px;
-  max-width: 480px;
+  max-width: 640px;
   border-left: 1px solid var(--color-border);
   background: var(--color-bg-secondary);
   flex-shrink: 0;
   overflow: hidden;
+
+  @media (max-width: 768px) {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 100%;
+    z-index: 50;
+    border-left: none;
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.3);
+  }
 `;
 
 const panelHeaderStyle = css`
@@ -178,14 +194,33 @@ const emptyStyle = css`
   text-align: center;
 `;
 
-type SidePanelTab = 'files' | 'changes';
+const overlayStyle = css`
+  display: none;
+
+  @media (max-width: 768px) {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 49;
+  }
+`;
+
+type SidePanelTab = 'files' | 'changes' | 'context' | 'review';
 
 export type SessionSidePanelProps = {
   onClose: () => void;
   className?: string;
+  messages?: Message[];
+  partsByMessage?: Map<string, Part[]>;
+  session?: Session;
+  sessionID?: string;
 };
 
-export function SessionSidePanel({ onClose, className }: SessionSidePanelProps) {
+export function SessionSidePanel({ onClose, className, messages, partsByMessage, session, sessionID }: SessionSidePanelProps) {
   const [activeTab, setActiveTab] = useState<SidePanelTab>('files');
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const { gitStatus } = useFileTree();
@@ -205,40 +240,81 @@ export function SessionSidePanel({ onClose, className }: SessionSidePanelProps) 
   }, []);
 
   return (
-    <div className={cx(panelStyle, className)}>
-      <div className={panelHeaderStyle}>
-        <div className={tabListStyle} role="tablist">
-          <button
-            role="tab"
-            className={tabButtonStyle}
-            data-active={activeTab === 'files' && !selectedPath}
-            onClick={() => { setActiveTab('files'); setSelectedPath(null); }}
-          >
-            Files
-          </button>
-          <button
-            role="tab"
-            className={tabButtonStyle}
-            data-active={activeTab === 'changes' && !selectedPath}
-            onClick={() => { setActiveTab('changes'); setSelectedPath(null); }}
-          >
-            Changes
+    <>
+      <div className={overlayStyle} onClick={onClose} />
+      <div className={cx(panelStyle, className)}>
+        <div className={panelHeaderStyle}>
+          <div className={tabListStyle} role="tablist">
+            <button
+              role="tab"
+              className={tabButtonStyle}
+              data-active={activeTab === 'files' && !selectedPath}
+              onClick={() => {
+                setActiveTab('files');
+                setSelectedPath(null);
+              }}
+            >
+              Files
+            </button>
+            <button
+              role="tab"
+              className={tabButtonStyle}
+              data-active={activeTab === 'changes' && !selectedPath}
+              onClick={() => {
+                setActiveTab('changes');
+                setSelectedPath(null);
+              }}
+            >
+              Changes
+            </button>
+            <button
+              role="tab"
+              className={tabButtonStyle}
+              data-active={activeTab === 'context' && !selectedPath}
+              onClick={() => {
+                setActiveTab('context');
+                setSelectedPath(null);
+              }}
+            >
+              Context
+            </button>
+            {sessionID && (
+              <button
+                role="tab"
+                className={tabButtonStyle}
+                data-active={activeTab === 'review' && !selectedPath}
+                onClick={() => {
+                  setActiveTab('review');
+                  setSelectedPath(null);
+                }}
+              >
+                Review
+              </button>
+            )}
+          </div>
+          <button className={closeButtonStyle} onClick={onClose} aria-label="Close panel">
+            ✕
           </button>
         </div>
-        <button className={closeButtonStyle} onClick={onClose} aria-label="Close panel">
-          ✕
-        </button>
+        <div className={panelContentStyle}>
+          {selectedPath ? (
+            <FileViewerPanel path={selectedPath} onBack={handleBack} />
+          ) : activeTab === 'files' ? (
+            <FileTree onFileClick={handleFileClick} />
+          ) : activeTab === 'context' ? (
+            <SessionContextTab
+              messages={messages ?? []}
+              partsByMessage={partsByMessage ?? new Map()}
+              session={session}
+            />
+          ) : activeTab === 'review' && sessionID ? (
+            <SessionReviewTab sessionID={sessionID} />
+          ) : (
+            <ChangesList changes={gitStatus} onFileClick={handleChangeClick} />
+          )}
+        </div>
       </div>
-      <div className={panelContentStyle}>
-        {selectedPath ? (
-          <FileViewerPanel path={selectedPath} onBack={handleBack} />
-        ) : activeTab === 'files' ? (
-          <FileTree onFileClick={handleFileClick} />
-        ) : (
-          <ChangesList changes={gitStatus} onFileClick={handleChangeClick} />
-        )}
-      </div>
-    </div>
+    </>
   );
 }
 

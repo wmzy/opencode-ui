@@ -75,7 +75,7 @@ export function SelectDirectoryDialog({ open, onClose, onSelect, currentPath }: 
       open={open}
       onClose={onClose}
       title="Select Directory"
-      footer={
+      footer={(
         <div style={{ display: 'flex', gap: 8 }}>
           <Button variant="secondary" onClick={onClose}>Cancel</Button>
           <Button
@@ -91,7 +91,7 @@ export function SelectDirectoryDialog({ open, onClose, onSelect, currentPath }: 
             Open
           </Button>
         </div>
-      }
+      )}
     >
       {RECENT_DIRS.length === 0 ? (
         <div className={emptyStyle}>No recent directories</div>

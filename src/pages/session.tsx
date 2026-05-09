@@ -1,11 +1,11 @@
-import { css, cx } from '@linaria/core';
+import { css } from '@linaria/core';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useI18n } from '@/context/language';
 import { useServer } from '@/context/server';
 import { usePrompt } from '@/context/prompt';
 import { useCommands } from '@/context/command';
-import { createSdk, type OpenCodeSdk } from '@/lib/sdk';
+import { createSdk } from '@/lib/sdk';
 import type { Message, MessageWithParts } from '@/types/message';
 import type { Part } from '@/types/part';
 import { SessionHeader } from '@/components/session/session-header';
@@ -17,7 +17,6 @@ import { SessionQuestionDock } from '@/components/session/session-question-dock'
 import { SessionTodoDock } from '@/components/session/session-todo-dock';
 import { TerminalPanel } from '@/components/terminal/terminal-panel';
 import { Spinner } from '@/components/ui/spinner';
-import { Button } from '@/components/ui/button';
 
 const sessionContainer = css`
   display: flex;
@@ -87,15 +86,6 @@ const messageAreaStyle = css`
   flex-direction: column;
 `;
 
-const toolbarStyle = css`
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 0 8px;
-  margin-left: auto;
-  flex-shrink: 0;
-`;
-
 export function SessionPage() {
   const { id, dir } = useParams<{ id?: string; dir?: string }>();
   const navigate = useNavigate();
@@ -148,7 +138,9 @@ export function SessionPage() {
           if (typeof result === 'string') {
             await navigator.clipboard.writeText(result);
           }
-        } catch {}
+        } catch {
+          // ignore clipboard failure
+        }
       },
     }));
 
@@ -156,7 +148,7 @@ export function SessionPage() {
       id: 'model.choose',
       label: 'Choose Model',
       group: 'Model',
-      shortcut: "mod+'",
+      shortcut: 'mod+\'',
       action: () => {},
     }));
 
@@ -273,14 +265,18 @@ export function SessionPage() {
     try {
       await sdk.session.update(id, { body: { time: { archived: Date.now() } } });
       navigate('/');
-    } catch {}
+    } catch {
+      // ignore archive failure
+    }
   }, [id, sdk, navigate]);
 
   const handleTitleChange = useCallback(async (newTitle: string) => {
     if (!id) return;
     try {
       await sdk.session.update(id, { body: { title: newTitle } });
-    } catch {}
+    } catch {
+      // ignore title update failure
+    }
   }, [id, sdk]);
 
   const isStreaming = prompt.state.streaming;
@@ -326,6 +322,10 @@ export function SessionPage() {
         onArchive={handleArchive}
         onTitleChange={handleTitleChange}
         tokenUsage={tokenUsage}
+        sidePanelOpen={sidePanelOpen}
+        terminalOpen={terminalOpen}
+        onToggleSidePanel={() => setSidePanelOpen(prev => !prev)}
+        onToggleTerminal={() => setTerminalOpen(prev => !prev)}
       />
       {error && <div className={errorBanner}>{error}</div>}
       <div className={sessionBodyStyle}>
@@ -344,16 +344,14 @@ export function SessionPage() {
           )}
         </div>
         {sidePanelOpen && (
-          <SessionSidePanel onClose={() => setSidePanelOpen(false)} />
+          <SessionSidePanel
+            onClose={() => setSidePanelOpen(false)}
+            messages={messages}
+            partsByMessage={partsByMessage}
+            session={sessionData as import('@/types/session').Session | undefined}
+            sessionID={id}
+          />
         )}
-      </div>
-      <div className={toolbarStyle}>
-        <Button variant="ghost" size="sm" onClick={() => setSidePanelOpen(prev => !prev)}>
-          📁
-        </Button>
-        <Button variant="ghost" size="sm" onClick={() => setTerminalOpen(prev => !prev)}>
-          ⌨
-        </Button>
       </div>
       <SessionTodoDock sessionId={id} />
       <SessionPermissionDock sessionId={id} />

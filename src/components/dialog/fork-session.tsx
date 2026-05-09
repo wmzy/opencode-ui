@@ -14,7 +14,7 @@ export function ForkSessionDialog({ open, onClose, onFork, sessionName }: ForkSe
       open={open}
       onClose={onClose}
       title="Fork Session"
-      footer={
+      footer={(
         <div style={{ display: 'flex', gap: 8 }}>
           <Button variant="secondary" onClick={onClose}>Cancel</Button>
           <Button
@@ -27,7 +27,7 @@ export function ForkSessionDialog({ open, onClose, onFork, sessionName }: ForkSe
             Fork
           </Button>
         </div>
-      }
+      )}
     >
       <div style={{ fontSize: 14, color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
         {sessionName ? (

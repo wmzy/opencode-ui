@@ -1,267 +1,267 @@
-import type { Message } from "./message"
-import type { Part } from "./part"
-import type { Permission, FileDiff } from "./common"
-import type { Session, SessionStatus } from "./session"
-import type { Pty } from "./terminal"
-import type { Todo } from "./shared-types"
+import type { Message } from './message';
+import type { Part } from './part';
+import type { Permission, FileDiff } from './common';
+import type { Session, SessionStatus } from './session';
+import type { Pty } from './terminal';
+import type { Todo } from './shared-types';
 
 export type EventServerInstanceDisposed = {
-  type: "server.instance.disposed"
+  type: 'server.instance.disposed';
   properties: {
-    directory: string
-  }
-}
+    directory: string;
+  };
+};
 
 export type EventInstallationUpdated = {
-  type: "installation.updated"
+  type: 'installation.updated';
   properties: {
-    version: string
-  }
-}
+    version: string;
+  };
+};
 
 export type EventInstallationUpdateAvailable = {
-  type: "installation.update-available"
+  type: 'installation.update-available';
   properties: {
-    version: string
-  }
-}
+    version: string;
+  };
+};
 
 export type EventLspClientDiagnostics = {
-  type: "lsp.client.diagnostics"
+  type: 'lsp.client.diagnostics';
   properties: {
-    serverID: string
-    path: string
-  }
-}
+    serverID: string;
+    path: string;
+  };
+};
 
 export type EventLspUpdated = {
-  type: "lsp.updated"
+  type: 'lsp.updated';
   properties: {
-    [key: string]: unknown
-  }
-}
+    [key: string]: unknown;
+  };
+};
 
 export type EventMessageUpdated = {
-  type: "message.updated"
+  type: 'message.updated';
   properties: {
-    info: Message
-  }
-}
+    info: Message;
+  };
+};
 
 export type EventMessageRemoved = {
-  type: "message.removed"
+  type: 'message.removed';
   properties: {
-    sessionID: string
-    messageID: string
-  }
-}
+    sessionID: string;
+    messageID: string;
+  };
+};
 
 export type EventMessagePartUpdated = {
-  type: "message.part.updated"
+  type: 'message.part.updated';
   properties: {
-    part: Part
-    delta?: string
-  }
-}
+    part: Part;
+    delta?: string;
+  };
+};
 
 export type EventMessagePartRemoved = {
-  type: "message.part.removed"
+  type: 'message.part.removed';
   properties: {
-    sessionID: string
-    messageID: string
-    partID: string
-  }
-}
+    sessionID: string;
+    messageID: string;
+    partID: string;
+  };
+};
 
 export type EventPermissionUpdated = {
-  type: "permission.updated"
-  properties: Permission
-}
+  type: 'permission.updated';
+  properties: Permission;
+};
 
 export type EventPermissionReplied = {
-  type: "permission.replied"
+  type: 'permission.replied';
   properties: {
-    sessionID: string
-    permissionID: string
-    response: string
-  }
-}
+    sessionID: string;
+    permissionID: string;
+    response: string;
+  };
+};
 
 export type EventSessionStatus = {
-  type: "session.status"
+  type: 'session.status';
   properties: {
-    sessionID: string
-    status: SessionStatus
-  }
-}
+    sessionID: string;
+    status: SessionStatus;
+  };
+};
 
 export type EventSessionIdle = {
-  type: "session.idle"
+  type: 'session.idle';
   properties: {
-    sessionID: string
-  }
-}
+    sessionID: string;
+  };
+};
 
 export type EventSessionCompacted = {
-  type: "session.compacted"
+  type: 'session.compacted';
   properties: {
-    sessionID: string
-  }
-}
+    sessionID: string;
+  };
+};
 
 export type EventFileEdited = {
-  type: "file.edited"
+  type: 'file.edited';
   properties: {
-    file: string
-  }
-}
+    file: string;
+  };
+};
 
 export type EventTodoUpdated = {
-  type: "todo.updated"
+  type: 'todo.updated';
   properties: {
-    sessionID: string
-    todos: Array<Todo>
-  }
-}
+    sessionID: string;
+    todos: Array<Todo>;
+  };
+};
 
 export type EventCommandExecuted = {
-  type: "command.executed"
+  type: 'command.executed';
   properties: {
-    name: string
-    sessionID: string
-    arguments: string
-    messageID: string
-  }
-}
+    name: string;
+    sessionID: string;
+    arguments: string;
+    messageID: string;
+  };
+};
 
 export type EventSessionCreated = {
-  type: "session.created"
+  type: 'session.created';
   properties: {
-    info: Session
-  }
-}
+    info: Session;
+  };
+};
 
 export type EventSessionUpdated = {
-  type: "session.updated"
+  type: 'session.updated';
   properties: {
-    info: Session
-  }
-}
+    info: Session;
+  };
+};
 
 export type EventSessionDeleted = {
-  type: "session.deleted"
+  type: 'session.deleted';
   properties: {
-    info: Session
-  }
-}
+    info: Session;
+  };
+};
 
 export type EventSessionDiff = {
-  type: "session.diff"
+  type: 'session.diff';
   properties: {
-    sessionID: string
-    diff: Array<FileDiff>
-  }
-}
+    sessionID: string;
+    diff: Array<FileDiff>;
+  };
+};
 
 export type EventSessionError = {
-  type: "session.error"
+  type: 'session.error';
   properties: {
-    sessionID?: string
-    error?: import("./message").MessageError
-  }
-}
+    sessionID?: string;
+    error?: import('./message').MessageError;
+  };
+};
 
 export type EventFileWatcherUpdated = {
-  type: "file.watcher.updated"
+  type: 'file.watcher.updated';
   properties: {
-    file: string
-    event: "add" | "change" | "unlink"
-  }
-}
+    file: string;
+    event: 'add' | 'change' | 'unlink';
+  };
+};
 
 export type EventVcsBranchUpdated = {
-  type: "vcs.branch.updated"
+  type: 'vcs.branch.updated';
   properties: {
-    branch?: string
-  }
-}
+    branch?: string;
+  };
+};
 
 export type EventTuiPromptAppend = {
-  type: "tui.prompt.append"
+  type: 'tui.prompt.append';
   properties: {
-    text: string
-  }
-}
+    text: string;
+  };
+};
 
 export type TuiCommand =
-  | "session.list"
-  | "session.new"
-  | "session.share"
-  | "session.interrupt"
-  | "session.compact"
-  | "session.page.up"
-  | "session.page.down"
-  | "session.half.page.up"
-  | "session.half.page.down"
-  | "session.first"
-  | "session.last"
-  | "prompt.clear"
-  | "prompt.submit"
-  | "agent.cycle"
-  | (string & {})
+  | 'session.list'
+  | 'session.new'
+  | 'session.share'
+  | 'session.interrupt'
+  | 'session.compact'
+  | 'session.page.up'
+  | 'session.page.down'
+  | 'session.half.page.up'
+  | 'session.half.page.down'
+  | 'session.first'
+  | 'session.last'
+  | 'prompt.clear'
+  | 'prompt.submit'
+  | 'agent.cycle'
+  | (string & {});
 
 export type EventTuiCommandExecute = {
-  type: "tui.command.execute"
+  type: 'tui.command.execute';
   properties: {
-    command: TuiCommand
-  }
-}
+    command: TuiCommand;
+  };
+};
 
 export type EventTuiToastShow = {
-  type: "tui.toast.show"
+  type: 'tui.toast.show';
   properties: {
-    title?: string
-    message: string
-    variant: "info" | "success" | "warning" | "error"
-    duration?: number
-  }
-}
+    title?: string;
+    message: string;
+    variant: 'info' | 'success' | 'warning' | 'error';
+    duration?: number;
+  };
+};
 
 export type EventPtyCreated = {
-  type: "pty.created"
+  type: 'pty.created';
   properties: {
-    info: Pty
-  }
-}
+    info: Pty;
+  };
+};
 
 export type EventPtyUpdated = {
-  type: "pty.updated"
+  type: 'pty.updated';
   properties: {
-    info: Pty
-  }
-}
+    info: Pty;
+  };
+};
 
 export type EventPtyExited = {
-  type: "pty.exited"
+  type: 'pty.exited';
   properties: {
-    id: string
-    exitCode: number
-  }
-}
+    id: string;
+    exitCode: number;
+  };
+};
 
 export type EventPtyDeleted = {
-  type: "pty.deleted"
+  type: 'pty.deleted';
   properties: {
-    id: string
-  }
-}
+    id: string;
+  };
+};
 
 export type EventServerConnected = {
-  type: "server.connected"
+  type: 'server.connected';
   properties: {
-    [key: string]: unknown
-  }
-}
+    [key: string]: unknown;
+  };
+};
 
 export type Event =
   | EventServerInstanceDisposed
@@ -295,9 +295,9 @@ export type Event =
   | EventPtyUpdated
   | EventPtyExited
   | EventPtyDeleted
-  | EventServerConnected
+  | EventServerConnected;
 
 export type GlobalEvent = {
-  directory: string
-  payload: Event
-}
+  directory: string;
+  payload: Event;
+};

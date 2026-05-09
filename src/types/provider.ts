@@ -1,187 +1,187 @@
-import type { Range } from "./common"
+import type { Range } from './common';
 
 export type Model = {
-  id: string
-  providerID: string
+  id: string;
+  providerID: string;
   api: {
-    id: string
-    url: string
-    npm: string
-  }
-  name: string
+    id: string;
+    url: string;
+    npm: string;
+  };
+  name: string;
   capabilities: {
-    temperature: boolean
-    reasoning: boolean
-    attachment: boolean
-    toolcall: boolean
+    temperature: boolean;
+    reasoning: boolean;
+    attachment: boolean;
+    toolcall: boolean;
     input: {
-      text: boolean
-      audio: boolean
-      image: boolean
-      video: boolean
-      pdf: boolean
-    }
+      text: boolean;
+      audio: boolean;
+      image: boolean;
+      video: boolean;
+      pdf: boolean;
+    };
     output: {
-      text: boolean
-      audio: boolean
-      image: boolean
-      video: boolean
-      pdf: boolean
-    }
-  }
+      text: boolean;
+      audio: boolean;
+      image: boolean;
+      video: boolean;
+      pdf: boolean;
+    };
+  };
   cost: {
-    input: number
-    output: number
+    input: number;
+    output: number;
     cache: {
-      read: number
-      write: number
-    }
+      read: number;
+      write: number;
+    };
     experimentalOver200K?: {
-      input: number
-      output: number
+      input: number;
+      output: number;
       cache: {
-        read: number
-        write: number
-      }
-    }
-  }
+        read: number;
+        write: number;
+      };
+    };
+  };
   limit: {
-    context: number
-    output: number
-  }
-  status: "alpha" | "beta" | "deprecated" | "active"
+    context: number;
+    output: number;
+  };
+  status: 'alpha' | 'beta' | 'deprecated' | 'active';
   options: {
-    [key: string]: unknown
-  }
+    [key: string]: unknown;
+  };
   headers: {
-    [key: string]: string
-  }
-}
+    [key: string]: string;
+  };
+};
 
 export type Provider = {
-  id: string
-  name: string
-  source: "env" | "config" | "custom" | "api"
-  env: Array<string>
-  key?: string
+  id: string;
+  name: string;
+  source: 'env' | 'config' | 'custom' | 'api';
+  env: Array<string>;
+  key?: string;
   options: {
-    [key: string]: unknown
-  }
+    [key: string]: unknown;
+  };
   models: {
-    [key: string]: Model
-  }
-}
+    [key: string]: Model;
+  };
+};
 
 export type ProviderAuthMethod = {
-  type: "oauth" | "api"
-  label: string
-}
+  type: 'oauth' | 'api';
+  label: string;
+};
 
 export type ProviderAuthAuthorization = {
-  url: string
-  method: "auto" | "code"
-  instructions: string
-}
+  url: string;
+  method: 'auto' | 'code';
+  instructions: string;
+};
 
 export type OAuth = {
-  type: "oauth"
-  refresh: string
-  access: string
-  expires: number
-  enterpriseUrl?: string
-}
+  type: 'oauth';
+  refresh: string;
+  access: string;
+  expires: number;
+  enterpriseUrl?: string;
+};
 
 export type ApiAuth = {
-  type: "api"
-  key: string
-}
+  type: 'api';
+  key: string;
+};
 
 export type WellKnownAuth = {
-  type: "wellknown"
-  key: string
-  token: string
-}
+  type: 'wellknown';
+  key: string;
+  token: string;
+};
 
-export type Auth = OAuth | ApiAuth | WellKnownAuth
+export type Auth = OAuth | ApiAuth | WellKnownAuth;
 
 export type Agent = {
-  name: string
-  description?: string
-  mode: "subagent" | "primary" | "all"
-  builtIn: boolean
-  topP?: number
-  temperature?: number
-  color?: string
+  name: string;
+  description?: string;
+  mode: 'subagent' | 'primary' | 'all';
+  builtIn: boolean;
+  topP?: number;
+  temperature?: number;
+  color?: string;
   permission: {
-    edit: "ask" | "allow" | "deny"
+    edit: 'ask' | 'allow' | 'deny';
     bash: {
-      [key: string]: "ask" | "allow" | "deny"
-    }
-    webfetch?: "ask" | "allow" | "deny"
-    doom_loop?: "ask" | "allow" | "deny"
-    external_directory?: "ask" | "allow" | "deny"
-  }
+      [key: string]: 'ask' | 'allow' | 'deny';
+    };
+    webfetch?: 'ask' | 'allow' | 'deny';
+    doom_loop?: 'ask' | 'allow' | 'deny';
+    external_directory?: 'ask' | 'allow' | 'deny';
+  };
   model?: {
-    modelID: string
-    providerID: string
-  }
-  prompt?: string
+    modelID: string;
+    providerID: string;
+  };
+  prompt?: string;
   tools: {
-    [key: string]: boolean
-  }
+    [key: string]: boolean;
+  };
   options: {
-    [key: string]: unknown
-  }
-  maxSteps?: number
-}
+    [key: string]: unknown;
+  };
+  maxSteps?: number;
+};
 
 export type Symbol = {
-  name: string
-  kind: number
+  name: string;
+  kind: number;
   location: {
-    uri: string
-    range: Range
-  }
-}
+    uri: string;
+    range: Range;
+  };
+};
 
 export type McpStatusConnected = {
-  status: "connected"
-}
+  status: 'connected';
+};
 
 export type McpStatusDisabled = {
-  status: "disabled"
-}
+  status: 'disabled';
+};
 
 export type McpStatusFailed = {
-  status: "failed"
-  error: string
-}
+  status: 'failed';
+  error: string;
+};
 
 export type McpStatusNeedsAuth = {
-  status: "needs_auth"
-}
+  status: 'needs_auth';
+};
 
 export type McpStatusNeedsClientRegistration = {
-  status: "needs_client_registration"
-  error: string
-}
+  status: 'needs_client_registration';
+  error: string;
+};
 
 export type McpStatus =
   | McpStatusConnected
   | McpStatusDisabled
   | McpStatusFailed
   | McpStatusNeedsAuth
-  | McpStatusNeedsClientRegistration
+  | McpStatusNeedsClientRegistration;
 
 export type LspStatus = {
-  id: string
-  name: string
-  root: string
-  status: "connected" | "error"
-}
+  id: string;
+  name: string;
+  root: string;
+  status: 'connected' | 'error';
+};
 
 export type FormatterStatus = {
-  name: string
-  extensions: Array<string>
-  enabled: boolean
-}
+  name: string;
+  extensions: Array<string>;
+  enabled: boolean;
+};

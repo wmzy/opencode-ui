@@ -147,8 +147,7 @@ export function SessionQuestionDock({ sessionId, className }: QuestionDockProps)
               placeholder="Type your answer…"
               value={responses[q.id] ?? ''}
               onChange={(e) =>
-                setResponses((prev) => ({ ...prev, [q.id]: e.target.value }))
-              }
+                setResponses((prev) => ({ ...prev, [q.id]: e.target.value }))}
               onKeyDown={(e) => handleKeyDown(e, q.id)}
             />
             <Button size="sm" onClick={() => handleReply(q.id)}>

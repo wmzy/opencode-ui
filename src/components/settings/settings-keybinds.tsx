@@ -15,12 +15,12 @@ type KeybindEntry = {
 const GROUPS: KeybindGroup[] = ['General', 'Session', 'Navigation', 'Model and agent', 'Terminal', 'Prompt'];
 
 const GROUP_LABELS: Record<KeybindGroup, string> = {
-  General: 'General',
-  Session: 'Session',
-  Navigation: 'Navigation',
+  'General': 'General',
+  'Session': 'Session',
+  'Navigation': 'Navigation',
   'Model and agent': 'Model and Agent',
-  Terminal: 'Terminal',
-  Prompt: 'Prompt',
+  'Terminal': 'Terminal',
+  'Prompt': 'Prompt',
 };
 
 function groupForId(id: string): KeybindGroup {

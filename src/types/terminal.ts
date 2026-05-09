@@ -1,27 +1,27 @@
 export type Pty = {
-  id: string
-  title: string
-  command: string
-  args: Array<string>
-  cwd: string
-  status: "running" | "exited"
-  pid: number
-}
+  id: string;
+  title: string;
+  command: string;
+  args: Array<string>;
+  cwd: string;
+  status: 'running' | 'exited';
+  pid: number;
+};
 
 export type PtyCreateInput = {
-  command?: string
-  args?: Array<string>
-  cwd?: string
-  title?: string
+  command?: string;
+  args?: Array<string>;
+  cwd?: string;
+  title?: string;
   env?: {
-    [key: string]: string
-  }
-}
+    [key: string]: string;
+  };
+};
 
 export type PtyUpdateInput = {
-  title?: string
+  title?: string;
   size?: {
-    rows: number
-    cols: number
-  }
-}
+    rows: number;
+    cols: number;
+  };
+};

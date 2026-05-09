@@ -31,14 +31,14 @@ export function EditProjectDialog({ open, onClose, currentName = '', onSave }: E
       open={open}
       onClose={onClose}
       title="Edit Project Name"
-      footer={
+      footer={(
         <div style={{ display: 'flex', gap: 8 }}>
           <Button variant="secondary" onClick={onClose}>Cancel</Button>
           <Button variant="primary" onClick={handleSave} disabled={!name.trim()}>
             Save
           </Button>
         </div>
-      }
+      )}
     >
       <div className={formStyle}>
         <Input

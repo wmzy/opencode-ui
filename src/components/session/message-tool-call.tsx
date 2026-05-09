@@ -1,158 +1,53 @@
-import { css, cx } from '@linaria/core';
 import { useState, useCallback } from 'react';
 import type { ToolPart } from '@/types/part';
+import { registerTool, getToolRenderer } from './tool-registry';
 import { MarkdownRenderer } from './markdown-renderer';
 import { FileViewer } from '@/components/file/file-viewer';
 import { Spinner } from '@/components/ui/spinner';
+import { BashToolRenderer } from './tool-renderers/bash-tool';
+import { EditToolRenderer } from './tool-renderers/edit-tool';
+import { ReadToolRenderer } from './tool-renderers/read-tool';
+import { WriteToolRenderer } from './tool-renderers/write-tool';
+import { GlobToolRenderer, GrepToolRenderer, ListToolRenderer } from './tool-renderers/search-tools';
+import { WebFetchToolRenderer, WebSearchToolRenderer } from './tool-renderers/web-tools';
+import { TaskToolRenderer } from './tool-renderers/task-tool';
+import { ApplyPatchToolRenderer } from './tool-renderers/apply-patch-tool';
+import {
+  wrapperStyle,
+  triggerStyle,
+  iconStyle,
+  iconRunning,
+  iconCompleted,
+  iconError,
+  toolNameStyle,
+  subtitleStyle,
+  chevronStyle,
+  chevronExpandedStyle,
+  contentStyle,
+  contentCollapsedStyle,
+  errorStyle,
+  bashCommandStyle,
+  filePathStyle,
+  fileViewerContainerStyle,
+  writeContentStyle,
+  editDetailsStyle,
+} from './message-tool-call.styles';
 
-const wrapperStyle = css`
-  margin: 6px 0;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  overflow: hidden;
-`;
+registerTool({ name: 'bash', render: BashToolRenderer });
+registerTool({ name: 'edit', render: EditToolRenderer });
+registerTool({ name: 'read', render: ReadToolRenderer });
+registerTool({ name: 'write', render: WriteToolRenderer });
+registerTool({ name: 'glob', render: GlobToolRenderer });
+registerTool({ name: 'grep', render: GrepToolRenderer });
+registerTool({ name: 'list', render: ListToolRenderer });
+registerTool({ name: 'webfetch', render: WebFetchToolRenderer });
+registerTool({ name: 'websearch', render: WebSearchToolRenderer });
+registerTool({ name: 'task', render: TaskToolRenderer });
+registerTool({ name: 'apply_patch', render: ApplyPatchToolRenderer });
 
-const triggerStyle = css`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 8px 12px;
-  background: var(--color-bg-secondary);
-  cursor: pointer;
-  border: none;
-  font-family: inherit;
-  font-size: 13px;
-  color: var(--color-text);
-  text-align: left;
-
-  &:hover {
-    background: var(--color-bg-tertiary);
-  }
-`;
-
-const iconStyle = css`
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  font-size: 14px;
-`;
-
-const iconRunning = css`
-  color: var(--color-accent);
-`;
-
-const iconCompleted = css`
-  color: var(--color-success);
-`;
-
-const iconError = css`
-  color: var(--color-error);
-`;
-
-const toolNameStyle = css`
-  font-weight: 500;
-  flex-shrink: 0;
-`;
-
-const subtitleStyle = css`
-  color: var(--color-text-tertiary);
-  font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-`;
-
-const chevronStyle = css`
-  margin-left: auto;
-  flex-shrink: 0;
-  color: var(--color-text-tertiary);
-  transition: transform 0.2s;
-  font-size: 12px;
-`;
-
-const chevronExpandedStyle = css`
-  transform: rotate(180deg);
-`;
-
-const contentStyle = css`
-  padding: 12px;
-  border-top: 1px solid var(--color-border);
-  max-height: 400px;
-  overflow-y: auto;
-`;
-
-const contentCollapsedStyle = css`
-  display: none;
-`;
-
-const errorStyle = css`
-  padding: 10px 12px;
-  border-top: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-error) 10%, transparent);
-  color: var(--color-error);
-  font-size: 12px;
-  font-family: var(--haze-font-mono, monospace);
-  white-space: pre-wrap;
-  word-break: break-word;
-`;
-
-const bashCommandStyle = css`
-  font-family: var(--haze-font-mono, monospace);
-  background: var(--color-bg-tertiary);
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  white-space: pre-wrap;
-  word-break: break-word;
-  margin-bottom: 8px;
-`;
-
-const filePathStyle = css`
-  font-family: var(--haze-font-mono, monospace);
-  font-size: 12px;
-  color: var(--color-accent);
-  margin-bottom: 4px;
-`;
-
-const fileViewerContainerStyle = css`
-  margin-top: 8px;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  overflow: hidden;
-`;
-
-const writeContentStyle = css`
-  margin-top: 8px;
-  padding: 8px 12px;
-  background: var(--color-bg-tertiary);
-  border-radius: 6px;
-  font-family: var(--haze-font-mono, monospace);
-  font-size: 12px;
-  white-space: pre-wrap;
-  word-break: break-word;
-  max-height: 300px;
-  overflow-y: auto;
-  color: var(--color-text-secondary);
-`;
-
-const editDetailsStyle = css`
-  margin-top: 8px;
-  padding: 8px 12px;
-  background: var(--color-bg-tertiary);
-  border-radius: 6px;
-  font-family: var(--haze-font-mono, monospace);
-  font-size: 12px;
-  white-space: pre-wrap;
-  word-break: break-word;
-  max-height: 300px;
-  overflow-y: auto;
-  color: var(--color-text-secondary);
-`;
+function cx(...args: (string | false | undefined | null)[]): string {
+  return args.filter(Boolean).join(' ');
+}
 
 type StatusIconProps = {
   status: string;
@@ -222,6 +117,22 @@ export function MessageToolCall({ part, defaultOpen = false, className }: Messag
 
   const output = status === 'completed' ? (state as { output?: string }).output : undefined;
   const error = status === 'error' ? (state as { error?: string }).error : undefined;
+  const metadata = (state as { metadata?: Record<string, unknown> }).metadata ?? {};
+
+  const RegisteredRenderer = getToolRenderer(tool);
+  if (RegisteredRenderer) {
+    return (
+      <RegisteredRenderer
+        input={input}
+        metadata={metadata}
+        tool={tool}
+        output={output}
+        status={status}
+        error={error}
+        defaultOpen={defaultOpen}
+      />
+    );
+  }
 
   const filePath = typeof input.filePath === 'string' ? input.filePath : null;
   const isFileTool = tool === 'read' || tool === 'write' || tool === 'edit';
@@ -245,15 +156,15 @@ export function MessageToolCall({ part, defaultOpen = false, className }: Messag
           )}
           {tool === 'edit' && (
             <>
-              {typeof input.oldText === 'string' && (
+              {(typeof input.oldText === 'string' || typeof input.oldString === 'string') && (
                 <div className={editDetailsStyle}>
-                  <div style={{ color: 'var(--color-error)', marginBottom: 4 }}>- {input.oldText}</div>
-                  {typeof input.newText === 'string' && (
-                    <div style={{ color: 'var(--color-success)' }}>+ {input.newText}</div>
+                  <div style={{ color: 'var(--color-error)', marginBottom: 4 }}>- {String(input.oldText ?? input.oldString)}</div>
+                  {(typeof input.newText === 'string' || typeof input.newString === 'string') && (
+                    <div style={{ color: 'var(--color-success)' }}>+ {String(input.newText ?? input.newString)}</div>
                   )}
                 </div>
               )}
-              {!input.oldText && output && <MarkdownRenderer text={output} />}
+              {!input.oldText && !input.oldString && output && <MarkdownRenderer text={output} />}
             </>
           )}
           {tool === 'read' && !output ? null : null}

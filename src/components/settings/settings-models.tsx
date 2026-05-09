@@ -195,7 +195,7 @@ export function SettingsModels() {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(m =>
-        m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q)
+        m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q),
       );
     }
     return result;

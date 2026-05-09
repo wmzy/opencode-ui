@@ -1,116 +1,116 @@
-import type { FileDiff } from "./common"
+import type { FileDiff } from './common';
 
 export type ProviderAuthError = {
-  name: "ProviderAuthError"
+  name: 'ProviderAuthError';
   data: {
-    providerID: string
-    message: string
-  }
-}
+    providerID: string;
+    message: string;
+  };
+};
 
 export type UnknownError = {
-  name: "UnknownError"
+  name: 'UnknownError';
   data: {
-    message: string
-  }
-}
+    message: string;
+  };
+};
 
 export type MessageOutputLengthError = {
-  name: "MessageOutputLengthError"
+  name: 'MessageOutputLengthError';
   data: {
-    [key: string]: unknown
-  }
-}
+    [key: string]: unknown;
+  };
+};
 
 export type MessageAbortedError = {
-  name: "MessageAbortedError"
+  name: 'MessageAbortedError';
   data: {
-    message: string
-  }
-}
+    message: string;
+  };
+};
 
 export type ApiError = {
-  name: "APIError"
+  name: 'APIError';
   data: {
-    message: string
-    statusCode?: number
-    isRetryable: boolean
+    message: string;
+    statusCode?: number;
+    isRetryable: boolean;
     responseHeaders?: {
-      [key: string]: string
-    }
-    responseBody?: string
-  }
-}
+      [key: string]: string;
+    };
+    responseBody?: string;
+  };
+};
 
 export type MessageError =
   | ProviderAuthError
   | UnknownError
   | MessageOutputLengthError
   | MessageAbortedError
-  | ApiError
+  | ApiError;
 
 export type UserMessage = {
-  id: string
-  sessionID: string
-  role: "user"
+  id: string;
+  sessionID: string;
+  role: 'user';
   time: {
-    created: number
-  }
+    created: number;
+  };
   summary?: {
-    title?: string
-    body?: string
-    diffs: Array<FileDiff>
-  }
-  agent: string
+    title?: string;
+    body?: string;
+    diffs: Array<FileDiff>;
+  };
+  agent: string;
   model: {
-    providerID: string
-    modelID: string
-  }
-  system?: string
+    providerID: string;
+    modelID: string;
+  };
+  system?: string;
   tools?: {
-    [key: string]: boolean
-  }
-}
+    [key: string]: boolean;
+  };
+};
 
 export type AssistantMessage = {
-  id: string
-  sessionID: string
-  role: "assistant"
+  id: string;
+  sessionID: string;
+  role: 'assistant';
   time: {
-    created: number
-    completed?: number
-  }
-  error?: MessageError
-  parentID: string
-  modelID: string
-  providerID: string
-  mode: string
+    created: number;
+    completed?: number;
+  };
+  error?: MessageError;
+  parentID: string;
+  modelID: string;
+  providerID: string;
+  mode: string;
   path: {
-    cwd: string
-    root: string
-  }
-  summary?: boolean
-  cost: number
+    cwd: string;
+    root: string;
+  };
+  summary?: boolean;
+  cost: number;
   tokens: {
-    input: number
-    output: number
-    reasoning: number
+    input: number;
+    output: number;
+    reasoning: number;
     cache: {
-      read: number
-      write: number
-    }
-  }
-  finish?: string
-}
+      read: number;
+      write: number;
+    };
+  };
+  finish?: string;
+};
 
-export type Message = UserMessage | AssistantMessage
+export type Message = UserMessage | AssistantMessage;
 
 export type MessageWithParts = {
-  info: Message
-  parts: Array<import("./part").Part>
-}
+  info: Message;
+  parts: Array<import('./part').Part>;
+};
 
 export type AssistantMessageWithParts = {
-  info: AssistantMessage
-  parts: Array<import("./part").Part>
-}
+  info: AssistantMessage;
+  parts: Array<import('./part').Part>;
+};

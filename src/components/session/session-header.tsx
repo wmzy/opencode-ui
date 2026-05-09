@@ -84,6 +84,44 @@ const actionsGroupStyle = css`
   flex-shrink: 0;
 `;
 
+const toggleBtnStyle = css`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 24px;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: background-color 0.15s;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-bg-tertiary);
+  }
+`;
+
+const toggleBtnActiveStyle = css`
+  background: var(--color-bg-tertiary);
+`;
+
+const modelInfoStyle = css`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  padding: 2px 6px;
+  background: var(--color-bg-tertiary);
+  border-radius: 4px;
+`;
+
+const modelDotStyle = css`
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-success);
+`;
+
 const sharePopoverStyle = css`
   position: absolute;
   top: 100%;
@@ -143,6 +181,11 @@ export type SessionHeaderProps = {
   onArchive?: () => void;
   tokenUsage?: { input: number; output: number };
   maxTokens?: number;
+  sidePanelOpen?: boolean;
+  terminalOpen?: boolean;
+  onToggleSidePanel?: () => void;
+  onToggleTerminal?: () => void;
+  modelId?: string;
   className?: string;
 };
 
@@ -153,6 +196,11 @@ export function SessionHeader({
   onArchive,
   tokenUsage,
   maxTokens = 200000,
+  sidePanelOpen = false,
+  terminalOpen = false,
+  onToggleSidePanel,
+  onToggleTerminal,
+  modelId,
   className,
 }: SessionHeaderProps) {
   const { client } = useSdk();
@@ -281,7 +329,59 @@ export function SessionHeader({
           <span>{((tokenUsage.input + tokenUsage.output) / 1000).toFixed(1)}k</span>
         </div>
       )}
+      {modelId && (
+        <div className={modelInfoStyle}>
+          <div className={modelDotStyle} />
+          <span>{modelId}</span>
+        </div>
+      )}
+      {(onToggleSidePanel ?? onToggleTerminal) && (
+        <div className={actionsGroupStyle}>
+          {onToggleSidePanel && (
+            <button
+              className={cx(toggleBtnStyle, sidePanelOpen && toggleBtnActiveStyle)}
+              onClick={onToggleSidePanel}
+              aria-label="Toggle side panel"
+              aria-pressed={sidePanelOpen}
+              type="button"
+            >
+              📂
+            </button>
+          )}
+          {onToggleTerminal && (
+            <button
+              className={cx(toggleBtnStyle, terminalOpen && toggleBtnActiveStyle)}
+              onClick={onToggleTerminal}
+              aria-label="Toggle terminal"
+              aria-pressed={terminalOpen}
+              type="button"
+            >
+              ⌨
+            </button>
+          )}
+        </div>
+      )}
       <div className={actionsGroupStyle}>
+        {onToggleSidePanel && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggleSidePanel}
+            title={sidePanelOpen ? 'Close side panel' : 'Open side panel'}
+          >
+            {sidePanelOpen ? '📁' : '📁'}
+          </Button>
+        )}
+        {onToggleTerminal && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggleTerminal}
+            title={terminalOpen ? 'Close terminal' : 'Open terminal'}
+          >
+            ⌨
+          </Button>
+        )}
         {session?.id && (
           <div className={shareBtnWrapper} ref={shareRef}>
             <Button variant="ghost" size="sm" onClick={handleShare} loading={shareLoading}>

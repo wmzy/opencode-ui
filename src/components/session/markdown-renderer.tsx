@@ -133,7 +133,7 @@ type ParsedBlock = {
 
 function sanitizeAttribute(str: string): string {
   return str.replace(/[&<>"']/g, (c) => {
-    const map: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    const map: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' };
     return map[c] ?? c;
   });
 }
