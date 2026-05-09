@@ -155,15 +155,8 @@ export function EditToolRenderer({ input, metadata, output, status, error, defau
   const filePath = typeof input.filePath === 'string' ? input.filePath : '';
   const filename = filePath ? getFilename(filePath) : '';
 
-  const filediff = metadata.filediff as { before?: string; after?: string; additions?: number; deletions?: number; file?: string } | undefined;
+  const filediff = metadata.filediff as { before?: string; after?: string; patch?: string; additions?: number; deletions?: number; file?: string } | undefined;
   const hasDiffStats = !!filediff && (typeof filediff.additions === 'number' || typeof filediff.deletions === 'number');
-
-  const diffPatch = useMemo(() => {
-    const before = filediff?.before || (typeof input.oldString === 'string' ? input.oldString : typeof input.oldText === 'string' ? input.oldText : '');
-    const after = filediff?.after || (typeof input.newString === 'string' ? input.newString : typeof input.newText === 'string' ? input.newText : '');
-    if (!before && !after) return null;
-    return generateUnifiedDiff(before, after);
-  }, [filediff, input.oldText, input.newText, input.oldString, input.newString]);
 
   return (
     <EditToolInner
@@ -175,7 +168,6 @@ export function EditToolRenderer({ input, metadata, output, status, error, defau
       filePath={filePath}
       hasDiffStats={hasDiffStats}
       filediff={filediff}
-      diffPatch={diffPatch}
       input={input}
       output={output}
     />
@@ -190,8 +182,7 @@ type EditToolInnerProps = {
   filename: string;
   filePath: string;
   hasDiffStats: boolean;
-  filediff?: { before?: string; after?: string; additions?: number; deletions?: number; file?: string };
-  diffPatch: string | null;
+  filediff?: { before?: string; after?: string; patch?: string; additions?: number; deletions?: number; file?: string };
   input: Record<string, unknown>;
   output?: string;
 };
@@ -205,15 +196,31 @@ function EditToolInner({
   filePath,
   hasDiffStats,
   filediff,
-  diffPatch,
   input,
   output,
 }: EditToolInnerProps) {
   const [open, setOpen] = useState(defaultOpen);
+  const [hasBeenOpen, setHasBeenOpen] = useState(defaultOpen);
   const handleToggle = useCallback(() => {
     if (isPending) return;
-    setOpen((prev) => !prev);
-  }, [isPending]);
+    setOpen((prev) => {
+      if (!prev && !hasBeenOpen) setHasBeenOpen(true);
+      return !prev;
+    });
+  }, [isPending, hasBeenOpen]);
+
+  const diffPatch = useMemo(() => {
+    if (!hasBeenOpen) return null;
+    if (typeof filediff?.patch === 'string' && filediff.patch) {
+      const lines = filediff.patch.split('\n');
+      const cleaned = lines.filter(l => !l.startsWith('Index: ') && !l.startsWith('===') && !l.startsWith('--- ') && !l.startsWith('+++ '));
+      return cleaned.join('\n');
+    }
+    const before = filediff?.before || (typeof input.oldString === 'string' ? input.oldString : typeof input.oldText === 'string' ? input.oldText : '');
+    const after = filediff?.after || (typeof input.newString === 'string' ? input.newString : typeof input.newText === 'string' ? input.newText : '');
+    if (!before && !after) return null;
+    return generateUnifiedDiff(before, after);
+  }, [hasBeenOpen, filediff?.patch, filediff?.before, filediff?.after, input.oldText, input.newText, input.oldString, input.newString]);
 
   const statusIcon = (() => {
     if (isPending) return <span className={cx(iconStyle, iconRunning)}>✏️</span>;
@@ -241,18 +248,20 @@ function EditToolInner({
         )}
       </button>
       {error && <div className={errorBoxStyle}>{error}</div>}
-      <div className={cx(contentStyle, !open && contentCollapsedStyle)} style={{ padding: 12 }}>
-        {diffPatch ? (
-          <DiffViewer patch={diffPatch} />
-        ) : (typeof input.oldText === 'string' || typeof input.oldString === 'string') ? (
-          <div className={fallbackDiffStyle}>
-            <div className={removedLineStyle}>- {String(input.oldText ?? input.oldString)}</div>
-            {(typeof input.newText === 'string' || typeof input.newString === 'string') && (
-              <div className={addedLineStyle}>+ {String(input.newText ?? input.newString)}</div>
-            )}
-          </div>
-        ) : output ? null : null}
-      </div>
+      {open && (
+        <div className={contentStyle} style={{ padding: 12 }}>
+          {diffPatch ? (
+            <DiffViewer patch={diffPatch} />
+          ) : (typeof input.oldText === 'string' || typeof input.oldString === 'string') ? (
+            <div className={fallbackDiffStyle}>
+              <div className={removedLineStyle}>- {String(input.oldText ?? input.oldString)}</div>
+              {(typeof input.newText === 'string' || typeof input.newString === 'string') && (
+                <div className={addedLineStyle}>+ {String(input.newText ?? input.newString)}</div>
+              )}
+            </div>
+          ) : output ? null : null}
+        </div>
+      )}
     </div>
   );
 }

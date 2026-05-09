@@ -113,6 +113,13 @@ function computeCollapsedGroups(
       }
     }
 
+    if (lastChange < i) {
+      for (let j = i; j < lines.length; j++) {
+        visible.push(lines[j]);
+      }
+      break;
+    }
+
     if (lastChange - i > contextLines * 2 + 3) {
       for (let j = 0; j < contextLines && i + j < lines.length; j++) {
         visible.push(lines[i + j]);

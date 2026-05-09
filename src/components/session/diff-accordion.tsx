@@ -317,9 +317,15 @@ function DiffItem({ diff }: { diff: FileDiff }) {
 
   const patch = useMemo(() => {
     if (!hasBeenExpanded) return '';
+    const d = diff as FileDiff & { patch?: string };
+    if (typeof d.patch === 'string' && d.patch) {
+      const lines = d.patch.split('\n');
+      const cleaned = lines.filter(l => !l.startsWith('Index: ') && !l.startsWith('===') && !l.startsWith('--- ') && !l.startsWith('+++ '));
+      return cleaned.join('\n');
+    }
     if (diff.before == null && diff.after == null) return '';
     return generateUnifiedDiff(diff.before ?? '', diff.after ?? '');
-  }, [hasBeenExpanded, diff.before, diff.after, diff.file]);
+  }, [hasBeenExpanded, diff.before, diff.after, diff.file, (diff as any).patch]);
 
   return (
     <div className={diffItemStyle}>
