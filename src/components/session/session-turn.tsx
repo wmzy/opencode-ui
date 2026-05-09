@@ -53,7 +53,6 @@ const _assistantAvatarStyle = css`
 `;
 
 const messageContentStyle = css`
-  max-width: 85%;
   min-width: 0;
   padding: 12px 16px;
   border-radius: 12px;
@@ -63,6 +62,7 @@ const messageContentStyle = css`
 `;
 
 const userContentStyle = css`
+  max-width: 85%;
   background: var(--color-accent);
   color: white;
   border-bottom-right-radius: 4px;

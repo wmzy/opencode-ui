@@ -3,6 +3,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import type { Session } from '@/types/session';
 import { Button } from '@/components/ui/button';
 import { useSdk } from '@/context/sdk';
+import { useServer } from '@/context/server';
 
 const headerStyle = css`
   display: flex;
@@ -174,11 +175,19 @@ const shareBtnWrapper = css`
   position: relative;
 `;
 
+const statusDotStyle = css`
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-text-tertiary);
+`;
+
 export type SessionHeaderProps = {
   session?: Session;
   onTitleChange?: (title: string) => void;
-  onShare?: () => void;
-  onArchive?: () => void;
   tokenUsage?: { input: number; output: number };
   maxTokens?: number;
   sidePanelOpen?: boolean;
@@ -192,8 +201,6 @@ export type SessionHeaderProps = {
 export function SessionHeader({
   session,
   onTitleChange,
-  onShare,
-  onArchive,
   tokenUsage,
   maxTokens = 200000,
   sidePanelOpen = false,
@@ -204,11 +211,11 @@ export function SessionHeader({
   className,
 }: SessionHeaderProps) {
   const { client } = useSdk();
+  const { status } = useServer();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
   const [shareOpen, setShareOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
-  const [shareLoading, setShareLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const shareRef = useRef<HTMLDivElement>(null);
@@ -265,15 +272,12 @@ export function SessionHeader({
       setShareOpen((prev) => !prev);
       return;
     }
-    setShareLoading(true);
     try {
       const result = (await client.session.share(session.id)) as { url: string };
       setShareUrl(result.url);
       setShareOpen(true);
     } catch {
       // share failure
-    } finally {
-      setShareLoading(false);
     }
   }, [session?.id, client, shareUrl]);
 
@@ -335,58 +339,69 @@ export function SessionHeader({
           <span>{modelId}</span>
         </div>
       )}
-      {(onToggleSidePanel ?? onToggleTerminal) && (
-        <div className={actionsGroupStyle}>
-          {onToggleSidePanel && (
-            <button
-              className={cx(toggleBtnStyle, sidePanelOpen && toggleBtnActiveStyle)}
-              onClick={onToggleSidePanel}
-              aria-label="Toggle side panel"
-              aria-pressed={sidePanelOpen}
-              type="button"
-            >
-              📂
-            </button>
-          )}
-          {onToggleTerminal && (
-            <button
-              className={cx(toggleBtnStyle, terminalOpen && toggleBtnActiveStyle)}
-              onClick={onToggleTerminal}
-              aria-label="Toggle terminal"
-              aria-pressed={terminalOpen}
-              type="button"
-            >
-              ⌨
-            </button>
-          )}
-        </div>
-      )}
       <div className={actionsGroupStyle}>
-        {onToggleSidePanel && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggleSidePanel}
-            title={sidePanelOpen ? 'Close side panel' : 'Open side panel'}
-          >
-            {sidePanelOpen ? '📁' : '📁'}
-          </Button>
-        )}
+        <button
+          className={toggleBtnStyle}
+          aria-label="Status"
+          type="button"
+        >
+          <div style={{ position: 'relative', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="8" cy="8" r="6" />
+              <circle cx="8" cy="8" r="2.5" fill="currentColor" stroke="none" />
+            </svg>
+            <div
+              className={statusDotStyle}
+              style={{
+                background: status === 'connected' ? 'var(--color-success)' : status === 'disconnected' || status === 'error' ? 'var(--color-error)' : 'var(--color-text-tertiary)',
+              }}
+            />
+          </div>
+        </button>
         {onToggleTerminal && (
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
+            className={cx(toggleBtnStyle, terminalOpen && toggleBtnActiveStyle)}
             onClick={onToggleTerminal}
-            title={terminalOpen ? 'Close terminal' : 'Open terminal'}
+            aria-label="Toggle terminal"
+            aria-pressed={terminalOpen}
+            type="button"
           >
-            ⌨
-          </Button>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="4,4 7,8 4,12" />
+              <line x1="9" y1="12" x2="13" y2="12" />
+              <rect x="1" y="1" width="14" height="14" rx="2" />
+            </svg>
+          </button>
+        )}
+        {onToggleSidePanel && (
+          <button
+            className={cx(toggleBtnStyle, sidePanelOpen && toggleBtnActiveStyle)}
+            onClick={onToggleSidePanel}
+            aria-label="Toggle file tree"
+            aria-pressed={sidePanelOpen}
+            type="button"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="1" y="1" width="6" height="14" rx="1" />
+              <rect x="9" y="1" width="6" height="6" rx="1" />
+              <rect x="9" y="9" width="6" height="6" rx="1" />
+            </svg>
+          </button>
         )}
         {session?.id && (
           <div className={shareBtnWrapper} ref={shareRef}>
-            <Button variant="ghost" size="sm" onClick={handleShare} loading={shareLoading}>
-              🔗
-            </Button>
+            <button
+              className={toggleBtnStyle}
+              onClick={handleShare}
+              aria-label="Share session"
+              type="button"
+            >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 8a3 3 0 1 0 6 0 3 3 0 0 0-6 0" />
+                <path d="M4 8a3 3 0 1 0 6 0 3 3 0 0 0-6 0" transform="translate(-2,0)" />
+                <path d="M2 8a3 3 0 1 0 6 0 3 3 0 0 0-6 0" transform="translate(6,0)" />
+              </svg>
+            </button>
             {shareOpen && shareUrl && (
               <div className={sharePopoverStyle}>
                 <div className={shareUrlLabel}>Share link</div>
@@ -409,16 +424,6 @@ export function SessionHeader({
               </div>
             )}
           </div>
-        )}
-        {onShare && (
-          <Button variant="ghost" size="sm" onClick={onShare}>
-            Share
-          </Button>
-        )}
-        {onArchive && (
-          <Button variant="ghost" size="sm" onClick={onArchive}>
-            Archive
-          </Button>
         )}
       </div>
     </div>

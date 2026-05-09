@@ -260,16 +260,6 @@ export function SessionPage() {
     await prompt.abort(id, sdk);
   }, [id, sdk, prompt]);
 
-  const handleArchive = useCallback(async () => {
-    if (!id) return;
-    try {
-      await sdk.session.update(id, { body: { time: { archived: Date.now() } } });
-      navigate('/');
-    } catch {
-      // ignore archive failure
-    }
-  }, [id, sdk, navigate]);
-
   const handleTitleChange = useCallback(async (newTitle: string) => {
     if (!id) return;
     try {
@@ -319,7 +309,6 @@ export function SessionPage() {
     <div className={sessionContainer}>
       <SessionHeader
         session={sessionData as import('@/types/session').Session | undefined}
-        onArchive={handleArchive}
         onTitleChange={handleTitleChange}
         tokenUsage={tokenUsage}
         sidePanelOpen={sidePanelOpen}
