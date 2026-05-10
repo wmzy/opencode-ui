@@ -1,4 +1,4 @@
-import { css, cx } from '@linaria/core';
+import { css } from '@linaria/core';
 import type { ReactNode } from 'react';
 
 const headerStyle = css`
@@ -65,7 +65,7 @@ export function Titlebar({ title, actions, onToggleSidebar, showSidebarToggle }:
           ☰
         </button>
       )}
-      <span className={titleStyle}>{title || 'OpenCode'}</span>
+      <span className={titleStyle}>{title ?? 'OpenCode'}</span>
       {actions && <div className={actionsStyle}>{actions}</div>}
     </div>
   );

@@ -24,7 +24,7 @@ function interpolate(template: string, params?: Record<string, string | number>)
 export function I18nProvider({ children, defaultLocale = 'en' }: { children: ReactNode; defaultLocale?: string }) {
   const [locale, setLocale] = useState(() => {
     try {
-      return localStorage.getItem('opencode-locale') || defaultLocale;
+      return localStorage.getItem('opencode-locale') ?? defaultLocale;
     } catch {
       return defaultLocale;
     }

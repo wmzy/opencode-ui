@@ -110,7 +110,7 @@ export function Dialog({
           <button className={closeButtonStyle} onClick={onClose} aria-label="Close">
             ×
           </button>
-          {(title || description) && (
+          {(title ?? description) && (
             <div className={headerStyle}>
               {title && <h2 className={titleStyle} id="dialog-title">{title}</h2>}
               {description && <p className={descriptionStyle}>{description}</p>}

@@ -1,7 +1,6 @@
 import { css } from '@linaria/core';
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 
 type KeybindGroup = 'General' | 'Session' | 'Navigation' | 'Model and agent' | 'Terminal' | 'Prompt';
 

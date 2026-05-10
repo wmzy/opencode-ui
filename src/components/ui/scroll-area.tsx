@@ -1,6 +1,6 @@
 import { css, cx } from '@linaria/core';
-import type { CSSProperties, ReactNode, UIEventHandler } from 'react';
-import { useRef, useCallback, useState } from 'react';
+import type { CSSProperties, UIEventHandler } from 'react';
+import { useRef, useCallback } from 'react';
 
 const scrollAreaStyle = css`
   overflow: auto;

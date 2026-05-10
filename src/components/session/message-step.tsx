@@ -37,8 +37,8 @@ export type MessageStepProps = {
   className?: string;
 };
 
-export function MessageStep({ start, finish, className }: MessageStepProps) {
-  const label = finish?.reason || 'step';
+export function MessageStep({ finish, className }: MessageStepProps) {
+  const label = finish?.reason ?? 'step';
   const isCompleted = !!finish;
 
   return (

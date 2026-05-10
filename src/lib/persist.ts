@@ -1,5 +1,3 @@
-import { formatRelativeTime } from './time';
-
 export interface PersistedState<T> {
   get(): T;
   set(value: T): void;

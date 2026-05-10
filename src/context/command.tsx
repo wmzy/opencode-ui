@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 
 export type Command = {
   id: string;
@@ -62,19 +62,28 @@ export function CommandProvider({ children }: { children: ReactNode }) {
       if (e.ctrlKey && e.key === '`') {
         e.preventDefault();
         const cmd = commands.find(c => c.id === 'terminal.toggle');
-        if (cmd) { cmd.action(); return; }
+        if (cmd) {
+          cmd.action();
+          return;
+        }
       }
       // ctrl+l → focus input
       if (e.ctrlKey && e.key === 'l' && !e.metaKey && !e.shiftKey) {
         e.preventDefault();
         const cmd = commands.find(c => c.id === 'input.focus');
-        if (cmd) { cmd.action(); return; }
+        if (cmd) {
+          cmd.action();
+          return;
+        }
       }
       // ctrl+alt+t → new terminal
       if (e.ctrlKey && e.altKey && e.key === 't') {
         e.preventDefault();
         const cmd = commands.find(c => c.id === 'terminal.new');
-        if (cmd) { cmd.action(); return; }
+        if (cmd) {
+          cmd.action();
+          return;
+        }
       }
     };
     window.addEventListener('keydown', handler);

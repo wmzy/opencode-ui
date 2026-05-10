@@ -1,4 +1,4 @@
-import { css, cx } from '@linaria/core';
+import { css } from '@linaria/core';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useServer } from '@/context/server';
 import { useSdk } from '@/context/sdk';

@@ -1,4 +1,4 @@
-import { css, cx } from '@linaria/core';
+import { css } from '@linaria/core';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useLayout } from '@/context/layout';
 import { useI18n } from '@/context/language';
@@ -141,7 +141,9 @@ export function SidebarPanel({ project, projectSdk }: SidebarPanelProps) {
       .finally(() => {
         if (mountedRef.current) setLoading(false);
       });
-    return () => { mountedRef.current = false; };
+    return () => {
+      mountedRef.current = false;
+    };
   }, [projectSdk]);
 
   const filtered = search

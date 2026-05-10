@@ -325,7 +325,7 @@ function DiffItem({ diff }: { diff: FileDiff }) {
     }
     if (diff.before == null && diff.after == null) return '';
     return generateUnifiedDiff(diff.before ?? '', diff.after ?? '');
-  }, [hasBeenExpanded, diff.before, diff.after, diff.file, (diff as any).patch]);
+  }, [hasBeenExpanded, diff]);
 
   return (
     <div className={diffItemStyle}>

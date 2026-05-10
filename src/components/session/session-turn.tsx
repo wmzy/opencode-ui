@@ -9,12 +9,8 @@ import type {
   FilePart,
   StepStartPart,
   StepFinishPart,
-  CompactionPart,
   AgentPart,
   SubtaskPart,
-  PatchPart,
-  SnapshotPart,
-  RetryPart,
 } from '@/types/part';
 import { MessageText } from './message-text';
 import { MessageToolCall } from './message-tool-call';
@@ -342,7 +338,6 @@ function PartRenderer({ part, streaming }: { part: Part; streaming: boolean }) {
       );
     }
     case 'patch': {
-      const patchPart = part as PatchPart;
       return (
         <div className={patchStyle}>
           <span>📝 Patch applied</span>

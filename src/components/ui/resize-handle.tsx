@@ -1,5 +1,4 @@
 import { css, cx } from '@linaria/core';
-import type { ReactNode } from 'react';
 import { useCallback, useRef } from 'react';
 
 const horizontalStyle = css`

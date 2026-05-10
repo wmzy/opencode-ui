@@ -6,12 +6,11 @@ import type { ToolIds, ToolList } from './part';
 import type { Path, VcsInfo } from './project';
 import type { Session, SessionStatus } from './session';
 import type {
-  Message,
   AssistantMessage,
   MessageWithParts,
   AssistantMessageWithParts,
 } from './message';
-import type { Part, PartInput } from './part';
+import type { PartInput } from './part';
 import type { FileDiff, BadRequestError, NotFoundError, PermissionResponse } from './common';
 import type { Command } from './command';
 import type { Provider, ProviderAuthMethod, ProviderAuthAuthorization, Auth } from './provider';

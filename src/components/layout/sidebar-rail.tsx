@@ -327,7 +327,9 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
       .catch(() => {
         if (!cancelled) setProjects([]);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [client]);
 
   const currentPath = useMemo(() => {
@@ -357,7 +359,9 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
       } catch {
         navigate(`/${encoded}/session`);
       }
-      if (!layout.sidebarOpen) toggleSidebar();
+      if (!layout.sidebarOpen) {
+        toggleSidebar();
+      }
     }
   }, [activeProjectId, toggleSidebar, getSdk, navigate, layout.sidebarOpen]);
 
@@ -372,7 +376,7 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
   useEffect(() => {
     if (!contextMenu) return;
     const close = (e: MouseEvent) => {
-      if (menuRef.current && menuRef.current.contains(e.target as Node)) return;
+      if (!menuRef.current?.contains(e.target as Node)) return;
       setContextMenu(null);
     };
     const closeKey = (e: KeyboardEvent) => {

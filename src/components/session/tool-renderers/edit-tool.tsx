@@ -90,10 +90,6 @@ const contentStyle = css`
   overflow-y: auto;
 `;
 
-const contentCollapsedStyle = css`
-  display: none;
-`;
-
 const errorBoxStyle = css`
   padding: 10px 12px;
   border-top: 1px solid var(--color-border);
@@ -216,8 +212,8 @@ function EditToolInner({
       const cleaned = lines.filter(l => !l.startsWith('Index: ') && !l.startsWith('===') && !l.startsWith('--- ') && !l.startsWith('+++ '));
       return cleaned.join('\n');
     }
-    const before = filediff?.before || (typeof input.oldString === 'string' ? input.oldString : typeof input.oldText === 'string' ? input.oldText : '');
-    const after = filediff?.after || (typeof input.newString === 'string' ? input.newString : typeof input.newText === 'string' ? input.newText : '');
+    const before = filediff?.before ?? (typeof input.oldString === 'string' ? input.oldString : typeof input.oldText === 'string' ? input.oldText : '');
+    const after = filediff?.after ?? (typeof input.newString === 'string' ? input.newString : typeof input.newText === 'string' ? input.newText : '');
     if (!before && !after) return null;
     return generateUnifiedDiff(before, after);
   }, [hasBeenOpen, filediff?.patch, filediff?.before, filediff?.after, input.oldText, input.newText, input.oldString, input.newString]);

@@ -1,5 +1,5 @@
 import { css, cx } from '@linaria/core';
-import { useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, type ReactNode } from 'react';
 
 const overlayStyle = css`
   position: fixed;
@@ -92,7 +92,7 @@ export type DialogProps = {
   raw?: boolean;
 };
 
-export function Dialog({ open, onClose, title, children, footer, className, raw = false }: DialogProps) {
+export function Dialog({ open, onClose, title, children, footer, raw = false, className: _className }: DialogProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
   const handleKeyDown = useCallback(

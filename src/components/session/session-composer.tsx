@@ -1,7 +1,5 @@
 import { css, cx } from '@linaria/core';
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 
 const composerStyle = css`
   flex-shrink: 0;

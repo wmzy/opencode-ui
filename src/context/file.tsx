@@ -121,7 +121,6 @@ export function FileProvider({ children, directory }: { children: ReactNode; dir
   const listDir = useCallback(
     async (path: string) => {
       const key = normalizePath(path);
-      const current = dirStateRef.current.get(key);
       dirStateRef.current.set(key, {
         expanded: true,
         loaded: false,

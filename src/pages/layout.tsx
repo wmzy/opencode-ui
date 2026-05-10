@@ -75,7 +75,9 @@ export function LayoutPage() {
       .catch(() => {
         if (!cancelled) setProjects([]);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [client]);
 
   const currentPath = useMemo(() => {
@@ -152,7 +154,10 @@ export function LayoutPage() {
       label: 'Focus Input',
       group: 'Navigation',
       shortcut: 'ctrl+l',
-      action: () => { const input = document.querySelector('textarea'); input?.focus(); },
+      action: () => {
+        const input = document.querySelector('textarea');
+        input?.focus();
+      },
     }));
 
     return () => unregisters.forEach(fn => fn());

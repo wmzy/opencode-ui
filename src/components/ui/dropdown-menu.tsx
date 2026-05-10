@@ -1,5 +1,5 @@
 import { css, cx } from '@linaria/core';
-import { Menu, MenuItem as HazeMenuItem, MenuDivider as HazeMenuDivider } from 'haze-ui';
+import { Menu } from 'haze-ui';
 import type { ReactNode } from 'react';
 
 const triggerStyle = css`

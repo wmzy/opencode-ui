@@ -253,7 +253,7 @@ export type MobileNavProps = {
   projectSdk: OpenCodeSdk;
 };
 
-export function MobileNav({ open, onClose, onSettings, project, projects, currentPath, projectSdk }: MobileNavProps) {
+export function MobileNav({ open, onClose, onSettings, project, projects, projectSdk }: MobileNavProps) {
   const { client } = useSdk();
   const navigate = useNavigate();
   const notification = useNotification();
@@ -281,7 +281,9 @@ export function MobileNav({ open, onClose, onSettings, project, projects, curren
       .finally(() => {
         if (mountedRef.current) setLoading(false);
       });
-    return () => { mountedRef.current = false; };
+    return () => {
+      mountedRef.current = false;
+    };
   }, [projectSdk]);
 
   const handleNewSession = useCallback(async () => {
@@ -326,7 +328,8 @@ export function MobileNav({ open, onClose, onSettings, project, projects, curren
 
   const handleEdit = useCallback(() => {
     if (!project) return;
-    setEditName(project.name || (project.worktree.replace(/\/+$/, '').split('/').pop() || ''));
+    const name = project.name ?? project.worktree.replace(/\/+$/, '').split('/').pop() ?? '';
+    setEditName(name);
     setEditOpen(true);
   }, [project]);
 
@@ -362,7 +365,7 @@ export function MobileNav({ open, onClose, onSettings, project, projects, curren
   }, [project, notification.project]);
 
   const displayName = project
-    ? (project.name || project.worktree.replace(/\/+$/, '').split('/').pop() || 'OpenCode')
+    ? (project.name ?? project.worktree.replace(/\/+$/, '').split('/').pop() ?? 'OpenCode')
     : 'OpenCode';
 
   return (

@@ -1,4 +1,4 @@
-import { css, cx } from '@linaria/core';
+import { css } from '@linaria/core';
 import { useState, type ReactNode } from 'react';
 import { Dialog } from '../dialog/dialog';
 import { SettingsGeneral } from './settings-general';

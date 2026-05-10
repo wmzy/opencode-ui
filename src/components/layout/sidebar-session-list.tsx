@@ -1,7 +1,6 @@
-import { css, cx } from '@linaria/core';
+import { css } from '@linaria/core';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLayout } from '@/context/layout';
-import { useSync } from '@/context/sync';
 import { useNotification } from '@/context/notification';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SidebarSessionItem } from './sidebar-session-item';
@@ -141,8 +140,7 @@ export function SidebarSessionList({
       {groups.map((group) => (
         <div key={group.label}>
           <div className={sectionLabel}>{group.label}</div>
-          {group.sessions.map((session, index) => {
-            const globalIndex = sessions.indexOf(session);
+          {group.sessions.map((session) => {
             return (
               <SidebarSessionItem
                 key={session.id}

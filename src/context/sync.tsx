@@ -1,6 +1,5 @@
-import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react';
 import { useSdk } from './sdk';
-import { useLayout } from './layout';
 import type { Session, Event, GlobalEvent } from '@/types';
 
 type SyncContextValue = {
@@ -77,7 +76,9 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     ]).finally(() => {
       if (mountedRef.current) setLoading(false);
     });
-    return () => { mountedRef.current = false; };
+    return () => {
+      mountedRef.current = false;
+    };
   }, [client]);
 
   useEffect(() => {
@@ -118,7 +119,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
             }
           }
         }
-      } catch (err) {
+      } catch {
         if (controller.signal.aborted) return;
         if (mountedRef.current) setConnected(false);
       }

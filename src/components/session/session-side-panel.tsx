@@ -329,7 +329,7 @@ function FileViewerPanel({ path, onBack }: FileViewerPanelProps) {
   const patch = fileState?.content?.patch;
   const diffText = fileState?.content?.diff;
 
-  const hasDiff = !!(patch || diffText);
+  const hasDiff = !!(patch ?? diffText);
 
   return (
     <>

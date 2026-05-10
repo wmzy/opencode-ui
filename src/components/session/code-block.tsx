@@ -155,7 +155,7 @@ export function CodeBlock({
   return (
     <div className={cx(wrapperStyle, className)}>
       <div className={headerStyle}>
-        <span className={langLabelStyle}>{language || 'text'}</span>
+        <span className={langLabelStyle}>{language ?? 'text'}</span>
         <button className={cx(copyBtnStyle, copied && copiedStyle)} onClick={handleCopy}>
           {copied ? 'Copied!' : 'Copy'}
         </button>

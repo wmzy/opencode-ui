@@ -1,7 +1,6 @@
 import { css, cx } from '@linaria/core';
-import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { marked } from 'marked';
-import type { CodeBlockProps } from './code-block';
 import { CodeBlock } from './code-block';
 
 const renderer = new marked.Renderer();
@@ -131,21 +130,6 @@ type ParsedBlock = {
   language: string;
 };
 
-function sanitizeAttribute(str: string): string {
-  return str.replace(/[&<>"']/g, (c) => {
-    const map: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' };
-    return map[c] ?? c;
-  });
-}
-
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
 function parseBlocks(text: string): ParsedBlock[] {
   const blocks: ParsedBlock[] = [];
   const codeBlockRegex = /```(\w*)\n([\s\S]*?)```/g;
@@ -203,18 +187,19 @@ function getHighlighter(): Promise<ShikiHighlighter | null> {
 
 export type MarkdownRendererProps = {
   text: string;
-  streaming?: boolean;
   className?: string;
 };
 
-export function MarkdownRenderer({ text, streaming = false, className }: MarkdownRendererProps) {
+export function MarkdownRenderer({ text, className }: MarkdownRendererProps) {
   const blocks = useMemo(() => parseBlocks(text), [text]);
   const [highlightedCode, setHighlightedCode] = useState<Record<number, string>>({});
   const mountedRef = useRef(true);
 
   useEffect(() => {
     mountedRef.current = true;
-    return () => { mountedRef.current = false; };
+    return () => {
+      mountedRef.current = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -229,7 +214,7 @@ export function MarkdownRenderer({ text, streaming = false, className }: Markdow
       codeBlocks.forEach((block) => {
         const idx = blocks.indexOf(block);
         try {
-          result[idx] = hl.codeToHtml(block.code, { lang: block.language || 'text', theme: 'github-dark' });
+          result[idx] = hl.codeToHtml(block.code, { lang: block.language ?? 'text', theme: 'github-dark' });
         } catch {
           result[idx] = '';
         }
@@ -239,10 +224,13 @@ export function MarkdownRenderer({ text, streaming = false, className }: Markdow
       }
     });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [blocks]);
 
-  if (!text.trim()) return null;
+  const textTrimmed = text.trim();
+  if (!textTrimmed) return null;
 
   return (
     <div className={cx(markdownStyle, className)}>

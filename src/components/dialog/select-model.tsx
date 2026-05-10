@@ -2,7 +2,6 @@ import { css } from '@linaria/core';
 import { useState } from 'react';
 import { Dialog } from './dialog';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 
 type ModelOption = {
   id: string;

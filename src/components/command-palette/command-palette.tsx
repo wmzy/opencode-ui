@@ -1,4 +1,4 @@
-import { css, cx } from '@linaria/core';
+import { css } from '@linaria/core';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useCommands, type Command } from '@/context/command';
 
@@ -114,7 +114,7 @@ export function CommandPalette() {
   );
 
   const grouped = filtered.reduce<Record<string, Command[]>>((acc, cmd) => {
-    const group = cmd.group || 'Commands';
+    const group = cmd.group ?? 'Commands';
     if (!acc[group]) acc[group] = [];
     acc[group].push(cmd);
     return acc;

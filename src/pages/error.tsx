@@ -27,7 +27,7 @@ export function ErrorPage({ error }: { error?: Error }) {
     <div className={container}>
       <div className={errorTitle}>Something went wrong</div>
       <div className={errorMessage}>
-        {error?.message || 'An unexpected error occurred'}
+        {error?.message ?? 'An unexpected error occurred'}
       </div>
     </div>
   );

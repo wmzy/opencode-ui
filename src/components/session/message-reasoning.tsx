@@ -57,16 +57,15 @@ const contentCollapsedStyle = css`
 
 export type MessageReasoningProps = {
   part: ReasoningPart;
-  streaming?: boolean;
   className?: string;
 };
 
-export function MessageReasoning({ part, streaming = false, className }: MessageReasoningProps) {
+export function MessageReasoning({ part, className }: MessageReasoningProps) {
   const [open, setOpen] = useState(false);
   const text = part.text?.trim();
-  if (!text) return null;
-
   const handleToggle = useCallback(() => setOpen((prev) => !prev), []);
+
+  if (!text) return null;
 
   return (
     <div className={cx(wrapperStyle, className)}>
@@ -77,7 +76,7 @@ export function MessageReasoning({ part, streaming = false, className }: Message
         </svg>
       </button>
       <div className={cx(contentStyle, !open && contentCollapsedStyle)}>
-        <MarkdownRenderer text={text} streaming={streaming} />
+        <MarkdownRenderer text={text} />
       </div>
     </div>
   );

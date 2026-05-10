@@ -1,5 +1,5 @@
 import { css } from '@linaria/core';
-import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
+import { useParams, useOutletContext } from 'react-router-dom';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useI18n } from '@/context/language';
 import { useServer } from '@/context/server';
@@ -89,7 +89,6 @@ const messageAreaStyle = css`
 
 export function SessionPage() {
   const { id, dir } = useParams<{ id?: string; dir?: string }>();
-  const navigate = useNavigate();
   const { t } = useI18n();
   const { active } = useServer();
   const prompt = usePrompt();

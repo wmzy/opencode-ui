@@ -1,6 +1,4 @@
-import type { FileDiff, Permission } from './common';
-import type { Message, MessageError } from './message';
-import type { Part, Todo } from './shared-types';
+import type { FileDiff } from './common';
 
 export type SessionStatus =
   | {

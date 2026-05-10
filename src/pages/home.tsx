@@ -139,7 +139,7 @@ function getAvatarColor(index: number) {
 }
 
 export function HomePage() {
-  const { status, checkHealth } = useServer();
+  const { status } = useServer();
   const { client } = useSdk();
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -165,7 +165,9 @@ export function HomePage() {
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [client, status]);
 
   const handleProjectClick = (project: Project) => {

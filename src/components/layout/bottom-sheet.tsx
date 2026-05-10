@@ -1,5 +1,5 @@
 import { css } from '@linaria/core';
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 
 const containerStyle = css`
   position: fixed;
