@@ -5,6 +5,7 @@ import { useSdk } from '@/context/sdk';
 import { useServer } from '@/context/server';
 import { useSync } from '@/context/sync';
 import { useLayout } from '@/context/layout';
+import { useNotification } from '@/context/notification';
 import { Tooltip } from '@/components/ui/tooltip';
 import type { Project } from '@/types/project';
 
@@ -92,6 +93,16 @@ const activeIndicator = css`
   height: 20px;
   border-radius: 0 3px 3px 0;
   background: var(--color-accent);
+`;
+
+const notifyDot = css`
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  z-index: 1;
 `;
 
 const bottomSection = css`
@@ -320,6 +331,7 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
   const { status } = useServer();
   const { connected } = useSync();
   const { layout, toggleSidebar } = useLayout();
+  const notification = useNotification();
   const navigate = useNavigate();
   const { dir } = useParams<{ dir: string }>();
   const [projects, setProjects] = useState<Project[]>([]);
@@ -424,6 +436,12 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
     setContextMenu(null);
   }, [contextMenu]);
 
+  const handleClearNotifications = useCallback(() => {
+    if (!contextMenu) return;
+    notification.project.markViewed(contextMenu.project.worktree);
+    setContextMenu(null);
+  }, [contextMenu, notification.project]);
+
   const handleCloseProject = useCallback(() => {
     if (!contextMenu) return;
     const closedWorktree = contextMenu.project.worktree;
@@ -462,6 +480,8 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
             const displayName = getProjectDisplayName(project);
             const letter = (project.icon?.override ?? displayName.charAt(0)?.toUpperCase() ?? '?');
             const bgColor = project.icon?.color ?? getProjectColor(displayName);
+            const unseen = notification.project.unseenCount(project.worktree);
+            const hasError = notification.project.unseenHasError(project.worktree);
 
             return (
               <Tooltip content={displayName} position="right" key={project.id}>
@@ -475,6 +495,12 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
                   <span className={projectAvatar} style={{ background: bgColor }}>
                     {letter}
                   </span>
+                  {unseen > 0 && (
+                    <span
+                      className={notifyDot}
+                      style={{ background: hasError ? 'var(--color-error)' : 'var(--color-accent)' }}
+                    />
+                  )}
                 </button>
               </Tooltip>
             );
@@ -512,7 +538,11 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
           >
             {workspaceEnabled[contextMenu.project.worktree] ? '禁用工作区' : '启用工作区'}
           </button>
-          <button className={contextMenuItemStyle} disabled>
+          <button
+            className={contextMenuItemStyle}
+            onClick={handleClearNotifications}
+            disabled={!contextMenu || notification.project.unseenCount(contextMenu.project.worktree) === 0}
+          >
             清除通知
           </button>
           <div className={contextMenuSeparator} />

@@ -2,6 +2,7 @@ import { css, cx } from '@linaria/core';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLayout } from '@/context/layout';
 import { useSync } from '@/context/sync';
+import { useNotification } from '@/context/notification';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SidebarSessionItem } from './sidebar-session-item';
 import type { Session } from '@/types';
@@ -66,6 +67,7 @@ export function SidebarSessionList({
   onArchive,
 }: SidebarSessionListProps) {
   const { layout } = useLayout();
+  const notification = useNotification();
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -146,6 +148,7 @@ export function SidebarSessionList({
                 key={session.id}
                 session={session}
                 active={layout.activeSessionId === session.id}
+                unread={notification.session.unseenCount(session.id) > 0}
                 onSelect={onSelect}
                 onRename={onRename}
                 onDelete={onDelete}

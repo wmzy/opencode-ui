@@ -5,6 +5,7 @@ import { useI18n } from '@/context/language';
 import { useServer } from '@/context/server';
 import { usePrompt } from '@/context/prompt';
 import { useCommands } from '@/context/command';
+import { useNotification } from '@/context/notification';
 import { createSdk } from '@/lib/sdk';
 import type { Message, MessageWithParts } from '@/types/message';
 import type { Part } from '@/types/part';
@@ -93,6 +94,7 @@ export function SessionPage() {
   const { active } = useServer();
   const prompt = usePrompt();
   const { onToggleSidebar } = useOutletContext<{ activeSessionId?: string; onToggleSidebar?: () => void }>();
+  const notification = useNotification();
 
   const directory = useMemo(() => {
     try {
@@ -117,6 +119,11 @@ export function SessionPage() {
   const [terminalHeight, setTerminalHeight] = useState(200);
   const [sidePanelOpen, setSidePanelOpen] = useState(false);
   const { registerCommand } = useCommands();
+
+  useEffect(() => {
+    if (!id) return;
+    notification.session.markViewed(id);
+  }, [id, notification.session]);
 
   useEffect(() => {
     const unregisters: (() => void)[] = [];
@@ -360,6 +367,7 @@ export function SessionPage() {
         <TerminalPanel
           height={terminalHeight}
           onHeightChange={setTerminalHeight}
+          directory={directory}
         />
       )}
     </div>

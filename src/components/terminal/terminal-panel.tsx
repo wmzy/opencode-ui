@@ -5,54 +5,39 @@ import { TerminalTab } from './terminal-tab';
 type TerminalPanelProps = {
   height?: number;
   onHeightChange?: (height: number) => void;
+  directory?: string;
   className?: string;
 };
 
 export function TerminalPanel({
   height = 200,
   onHeightChange,
+  directory,
   className,
 }: TerminalPanelProps) {
-  const { sessions, activeId, create, remove, setActive, sendInput } = useTerminals();
-  const [outputMap, setOutputMap] = useState<Record<string, string[]>>({});
-  const wsListenersRef = useRef<Map<string, (ev: MessageEvent) => void>>(new Map());
-  const panelRef = useRef<HTMLDivElement>(null);
-  const [resizing, setResizing] = useState(false);
+  const { sessions, activeId, create, close, open, update, trim, setDirectory } =
+    useTerminals();
   const [currentHeight, setCurrentHeight] = useState(height);
+  const [connected, setConnected] = useState<Record<string, boolean>>({});
+  const [resizing, setResizing] = useState(false);
+  const autoCreatedRef = useRef(false);
 
   useEffect(() => {
-    const handleWsMessage = (id: string) => (ev: MessageEvent) => {
-      let data: string;
-      if (ev.data instanceof ArrayBuffer) {
-        const bytes = new Uint8Array(ev.data);
-        if (bytes[0] === 0) return;
-        data = new TextDecoder().decode(ev.data);
-      } else {
-        data = String(ev.data);
-      }
-      setOutputMap((prev) => ({
-        ...prev,
-        [id]: [...(prev[id] ?? []), data],
-      }));
-    };
+    setDirectory(directory);
+  }, [directory, setDirectory]);
 
-    for (const session of sessions) {
-      if (!wsListenersRef.current.has(session.id) && session.ws) {
-        const handler = handleWsMessage(session.id);
-        wsListenersRef.current.set(session.id, handler);
-        session.ws.addEventListener('message', handler);
-      }
+  useEffect(() => {
+    if (sessions.length === 0 && !autoCreatedRef.current) {
+      autoCreatedRef.current = true;
+      void create();
     }
+  }, [sessions.length, create]);
 
-    return () => {
-      for (const [id, handler] of wsListenersRef.current) {
-        const session = sessions.find((s) => s.id === id);
-        if (session?.ws) {
-          session.ws.removeEventListener('message', handler);
-        }
-      }
-    };
-  }, [sessions]);
+  useEffect(() => {
+    if (sessions.length > 0) {
+      autoCreatedRef.current = false;
+    }
+  }, [sessions.length]);
 
   const handleCreate = useCallback(async () => {
     await create();
@@ -84,18 +69,34 @@ export function TerminalPanel({
     [currentHeight, onHeightChange],
   );
 
+  const handleConnect = useCallback(
+    (id: string) => {
+      setConnected((prev) => ({ ...prev, [id]: true }));
+      trim(id);
+    },
+    [trim],
+  );
+
+  const handleCleanup = useCallback(
+    (pty: Partial<import('@/context/terminal').LocalPTY> & { id: string }) => {
+      update(pty);
+    },
+    [update],
+  );
+
   if (sessions.length === 0) return null;
+
+  const activePty = sessions.find((s) => s.id === activeId);
 
   return (
     <div
-      ref={panelRef}
       className={className}
       style={{
         height: currentHeight,
         display: 'flex',
         flexDirection: 'column',
         borderTop: '1px solid var(--color-border, #2d333b)',
-        background: 'var(--color-panel-bg, #0d1117)',
+        background: '#191515',
         userSelect: resizing ? 'none' : 'auto',
       }}
     >
@@ -119,15 +120,15 @@ export function TerminalPanel({
           gap: 2,
           flexShrink: 0,
           overflowX: 'auto',
+          background: 'var(--color-panel-bg, #0d1117)',
         }}
       >
         {sessions.map((session) => (
-          <button
+          <div
             key={session.id}
             role="tab"
-            type="button"
             aria-selected={session.id === activeId}
-            onClick={() => setActive(session.id)}
+            onClick={() => open(session.id)}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -142,7 +143,7 @@ export function TerminalPanel({
                 session.id === activeId
                   ? '2px solid var(--color-accent, #388bfd)'
                   : '2px solid transparent',
-              color: 'inherit',
+              color: 'var(--color-text, inherit)',
               cursor: 'pointer',
               fontSize: 12,
               whiteSpace: 'nowrap',
@@ -153,12 +154,40 @@ export function TerminalPanel({
                 width: 6,
                 height: 6,
                 borderRadius: '50%',
-                background: session.connected ? '#3fb950' : '#f85149',
+                background: connected[session.id] ? '#3fb950' : '#f85149',
                 flexShrink: 0,
               }}
             />
-            {session.title}
-          </button>
+            <span
+              style={{
+                maxWidth: 120,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {session.title}
+            </span>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                void close(session.id);
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--color-muted, #636e7b)',
+                cursor: 'pointer',
+                fontSize: 14,
+                padding: '0 4px',
+                lineHeight: 1,
+              }}
+              aria-label={`Close ${session.title}`}
+            >
+              ×
+            </button>
+          </div>
         ))}
         <button
           type="button"
@@ -179,19 +208,17 @@ export function TerminalPanel({
         </button>
       </div>
       <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-        {sessions.map((session) => (
+        {activePty && (
           <TerminalTab
-            key={session.id}
-            id={session.id}
-            title={session.title}
-            connected={session.connected}
-            active={session.id === activeId}
-            output={outputMap[session.id] ?? []}
-            onInput={(data) => sendInput(session.id, data)}
-            onClose={() => remove(session.id)}
-            onFocus={() => setActive(session.id)}
+            key={activePty.id}
+            pty={activePty}
+            active={true}
+            directory={directory}
+            autoFocus={true}
+            onConnect={() => handleConnect(activePty.id)}
+            onCleanup={handleCleanup}
           />
-        ))}
+        )}
       </div>
     </div>
   );

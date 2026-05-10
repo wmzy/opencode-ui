@@ -4,6 +4,7 @@ import { ServerProvider } from '@/context/server';
 import { QueryProvider } from '@/context/query';
 import { SDKProvider } from '@/context/sdk';
 import { GlobalSyncProvider } from '@/context/global-sync';
+import { NotificationProvider } from '@/context/notification';
 import { SettingsProvider } from '@/context/settings';
 import { LayoutProvider } from '@/context/layout';
 import { I18nProvider } from '@/context/language';
@@ -28,6 +29,7 @@ export function App() {
           <QueryProvider>
             <SDKProvider>
               <GlobalSyncProvider>
+                <NotificationProvider>
                 <SettingsProvider>
                   <LayoutProvider>
                     <I18nProvider>
@@ -53,6 +55,7 @@ export function App() {
                     </I18nProvider>
                   </LayoutProvider>
                 </SettingsProvider>
+                </NotificationProvider>
               </GlobalSyncProvider>
             </SDKProvider>
           </QueryProvider>

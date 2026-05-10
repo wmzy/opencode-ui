@@ -3,6 +3,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useServer } from '@/context/server';
 import { useSdk } from '@/context/sdk';
+import { useNotification } from '@/context/notification';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SidebarSessionList } from './sidebar-session-list';
@@ -280,6 +281,7 @@ export function MobileNav({ open, onClose, onSettings, project, projects, curren
   const { status } = useServer();
   const { client } = useSdk();
   const navigate = useNavigate();
+  const notification = useNotification();
   const isConnected = status === 'connected';
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
@@ -380,6 +382,11 @@ export function MobileNav({ open, onClose, onSettings, project, projects, curren
     onClose();
   }, [project, projects, navigate, onClose]);
 
+  const handleClearNotifications = useCallback(() => {
+    if (!project) return;
+    notification.project.markViewed(project.worktree);
+  }, [project, notification.project]);
+
   const displayName = project
     ? (project.name || project.worktree.replace(/\/+$/, '').split('/').pop() || 'OpenCode')
     : 'OpenCode';
@@ -454,7 +461,11 @@ export function MobileNav({ open, onClose, onSettings, project, projects, curren
               >
                 {workspaceEnabled[project.worktree] ? '禁用工作区' : '启用工作区'}
               </button>
-              <button className={actionBtnStyle} disabled>
+              <button
+                className={actionBtnStyle}
+                onClick={handleClearNotifications}
+                disabled={!project || notification.project.unseenCount(project.worktree) === 0}
+              >
                 清除通知
               </button>
               <button className={cx(actionBtnStyle, actionBtnDangerStyle)} onClick={handleCloseProject}>

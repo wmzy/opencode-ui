@@ -20,4 +20,5 @@ export { I18nProvider, useI18n, registerTranslations } from './language';
 export { CommandProvider, useCommands, type Command } from './command';
 export { PromptProvider, usePrompt } from './prompt';
 export { FileProvider, useFileTree, useFileContent } from './file';
+export { NotificationProvider, useNotification } from './notification';
 export { TerminalProvider, useTerminals } from './terminal';
