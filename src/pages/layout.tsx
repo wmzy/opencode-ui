@@ -16,6 +16,7 @@ import type { Project } from '@/types/project';
 const layoutContainer = css`
   display: flex;
   height: 100vh;
+  height: 100dvh;
   width: 100vw;
   overflow: hidden;
   background: var(--color-bg);

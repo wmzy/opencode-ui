@@ -30,11 +30,11 @@ export function App() {
             <SDKProvider>
               <GlobalSyncProvider>
                 <NotificationProvider>
-                <SettingsProvider>
-                  <LayoutProvider>
-                    <I18nProvider>
-                      <CommandProvider>
-                        <TerminalProvider>
+                  <SettingsProvider>
+                    <LayoutProvider>
+                      <I18nProvider>
+                        <CommandProvider>
+                          <TerminalProvider>
                             <SyncProvider>
                               <PromptProvider>
                                 <BrowserRouter>
@@ -50,11 +50,11 @@ export function App() {
                                 </BrowserRouter>
                               </PromptProvider>
                             </SyncProvider>
-                        </TerminalProvider>
-                      </CommandProvider>
-                    </I18nProvider>
-                  </LayoutProvider>
-                </SettingsProvider>
+                          </TerminalProvider>
+                        </CommandProvider>
+                      </I18nProvider>
+                    </LayoutProvider>
+                  </SettingsProvider>
                 </NotificationProvider>
               </GlobalSyncProvider>
             </SDKProvider>

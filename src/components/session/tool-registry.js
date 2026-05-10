@@ -4,7 +4,7 @@
 // Types live in tool-types.d.ts.
 
 /** @type {Map<string, {name: string, render: Function}>} */
-var registry = new Map();
+const registry = new Map();
 
 /**
  * @param {{ name: string, render: Function }} spec

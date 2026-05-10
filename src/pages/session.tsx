@@ -280,16 +280,10 @@ export function SessionPage() {
   const isStreaming = prompt.state.streaming;
 
   const tokenUsage = useMemo(() => {
-    let input = 0;
-    let output = 0;
-    for (const msg of messages) {
-      if (msg.role === 'assistant') {
-        const a = msg as import('@/types/message').AssistantMessage;
-        input += a.tokens?.input ?? 0;
-        output += a.tokens?.output ?? 0;
-      }
-    }
-    return { input, output };
+    const last = [...messages].reverse().find((m): m is import('@/types/message').AssistantMessage => m.role === 'assistant');
+    if (!last?.tokens) return null;
+    const { input, output, reasoning, cache } = last.tokens;
+    return { input, output, reasoning, cacheRead: cache.read, cacheWrite: cache.write };
   }, [messages]);
 
   if (!id) {

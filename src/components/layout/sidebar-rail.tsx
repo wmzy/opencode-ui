@@ -2,8 +2,6 @@ import { css, cx } from '@linaria/core';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSdk } from '@/context/sdk';
-import { useServer } from '@/context/server';
-import { useSync } from '@/context/sync';
 import { useLayout } from '@/context/layout';
 import { useNotification } from '@/context/notification';
 import { Tooltip } from '@/components/ui/tooltip';
@@ -134,25 +132,6 @@ const iconButton = css`
   &:hover {
     background: var(--color-bg-tertiary);
     color: var(--color-text);
-  }
-`;
-
-const statusDotStyle = css`
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  margin: 6px 0;
-
-  &.connected { background: var(--color-success); }
-  &.disconnected { background: var(--color-error); }
-  &.connecting {
-    background: var(--color-warning);
-    animation: rail-pulse 1.5s ease-in-out infinite;
-  }
-
-  @keyframes rail-pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
   }
 `;
 
@@ -328,8 +307,6 @@ export type SidebarRailProps = {
 
 export function SidebarRail({ onSettings }: SidebarRailProps) {
   const { client, getSdk } = useSdk();
-  const { status } = useServer();
-  const { connected } = useSync();
   const { layout, toggleSidebar } = useLayout();
   const notification = useNotification();
   const navigate = useNavigate();
@@ -473,8 +450,6 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
     <>
       <div className={railStyle}>
         <div className={railItems}>
-          <div className={cx(statusDotStyle, connected ? 'connected' : status)} />
-
           {projects.map((project) => {
             const isActive = project.id === activeProjectId;
             const displayName = getProjectDisplayName(project);

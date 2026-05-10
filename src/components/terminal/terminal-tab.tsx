@@ -400,7 +400,7 @@ export function TerminalTab({
         const ZWS = '\u200B';
 
         const send = (data: string) => {
-          if (ws && ws.readyState === WebSocket.OPEN) ws.send(data);
+          if (ws?.readyState === WebSocket.OPEN) ws.send(data);
         };
 
         // ghostty-web container has beforeinput→preventDefault() and

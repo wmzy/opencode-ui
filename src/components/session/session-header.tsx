@@ -2,8 +2,10 @@ import { css, cx } from '@linaria/core';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type { Session } from '@/types/session';
 import { Button } from '@/components/ui/button';
+import { Tooltip } from '@/components/ui/tooltip';
+import { CircularProgress } from '@/components/ui/circular-progress';
 import { useSdk } from '@/context/sdk';
-import { useServer } from '@/context/server';
+import { StatusPopover } from './status-popover';
 
 const headerStyle = css`
   display: flex;
@@ -53,29 +55,52 @@ const titleDisplayStyle = css`
   min-width: 0;
 `;
 
-const contextUsageStyle = css`
+const contextBtnStyle = css`
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--color-text-tertiary);
-  padding: 2px 8px;
-  background: var(--color-bg-tertiary);
+  justify-content: center;
+  width: 28px;
+  height: 24px;
   border-radius: 4px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  position: relative;
 `;
 
-const contextBarStyle = css`
-  width: 60px;
-  height: 4px;
-  background: var(--color-border);
-  border-radius: 2px;
-  overflow: hidden;
+const contextPopoverStyle = css`
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  padding: 12px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 `;
 
-const contextFillStyle = css`
-  height: 100%;
-  border-radius: 2px;
-  transition: width 0.3s;
+const contextStatRowStyle = css`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+`;
+
+const contextStatLabelStyle = css`
+  color: var(--color-text-tertiary);
+`;
+
+const contextStatValueStyle = css`
+  color: var(--color-text);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 `;
 
 const actionsGroupStyle = css`
@@ -118,9 +143,13 @@ const toggleBtnStyle = css`
   font-size: 14px;
   transition: background-color 0.15s;
   cursor: pointer;
+  color: var(--color-text-secondary);
+  background: none;
+  border: none;
 
   &:hover {
     background: var(--color-bg-tertiary);
+    color: var(--color-text);
   }
 `;
 
@@ -198,20 +227,10 @@ const shareBtnWrapper = css`
   position: relative;
 `;
 
-const statusDotStyle = css`
-  position: absolute;
-  top: -1px;
-  right: -1px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--color-text-tertiary);
-`;
-
 export type SessionHeaderProps = {
   session?: Session;
   onTitleChange?: (title: string) => void;
-  tokenUsage?: { input: number; output: number };
+  tokenUsage?: { input: number; output: number; reasoning: number; cacheRead: number; cacheWrite: number } | null;
   maxTokens?: number;
   sidePanelOpen?: boolean;
   terminalOpen?: boolean;
@@ -236,7 +255,6 @@ export function SessionHeader({
   className,
 }: SessionHeaderProps) {
   const { client } = useSdk();
-  const { status } = useServer();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
   const [shareOpen, setShareOpen] = useState(false);
@@ -325,11 +343,26 @@ export function SessionHeader({
     });
   }, [shareUrl]);
 
-  const tokenPercent = tokenUsage
-    ? Math.min(100, ((tokenUsage.input + tokenUsage.output) / maxTokens) * 100)
+  const tokenTotal = tokenUsage ? tokenUsage.input + tokenUsage.output + tokenUsage.reasoning + tokenUsage.cacheRead + tokenUsage.cacheWrite : 0;
+  const tokenPercent = tokenUsage && maxTokens > 0
+    ? Math.min(100, (tokenTotal / maxTokens) * 100)
     : 0;
 
   const fillColor = tokenPercent > 80 ? 'var(--color-error)' : tokenPercent > 50 ? 'var(--color-warning)' : 'var(--color-success)';
+
+  const [contextOpen, setContextOpen] = useState(false);
+  const contextRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!contextOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (contextRef.current && !contextRef.current.contains(e.target as Node)) {
+        setContextOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [contextOpen]);
 
   return (
     <div className={cx(headerStyle, className)}>
@@ -362,14 +395,60 @@ export function SessionHeader({
         </div>
       )}
       {tokenUsage && (
-        <div className={contextUsageStyle}>
-          <div className={contextBarStyle}>
-            <div
-              className={contextFillStyle}
-              style={{ width: `${tokenPercent}%`, background: fillColor }}
-            />
-          </div>
-          <span>{((tokenUsage.input + tokenUsage.output) / 1000).toFixed(1)}k</span>
+        <div ref={contextRef} style={{ position: 'relative' }}>
+          <Tooltip
+            content={(
+              <>
+                <div>{(tokenTotal / 1000).toFixed(1)}k tokens</div>
+                <div>{Math.round(tokenPercent)}% usage</div>
+              </>
+            )}
+          >
+            <button
+              className={contextBtnStyle}
+              onClick={() => setContextOpen((prev) => !prev)}
+              aria-label="Context usage"
+              type="button"
+            >
+              <CircularProgress percentage={tokenPercent} size={16} strokeWidth={2.5} color={fillColor} />
+            </button>
+          </Tooltip>
+          {contextOpen && (
+            <div className={contextPopoverStyle}>
+              <div className={contextStatRowStyle}>
+                <span className={contextStatLabelStyle}>Total</span>
+                <span className={contextStatValueStyle}>{(tokenTotal / 1000).toFixed(1)}k</span>
+              </div>
+              <div className={contextStatRowStyle}>
+                <span className={contextStatLabelStyle}>Input</span>
+                <span className={contextStatValueStyle}>{(tokenUsage.input / 1000).toFixed(1)}k</span>
+              </div>
+              <div className={contextStatRowStyle}>
+                <span className={contextStatLabelStyle}>Output</span>
+                <span className={contextStatValueStyle}>{(tokenUsage.output / 1000).toFixed(1)}k</span>
+              </div>
+              {tokenUsage.reasoning > 0 && (
+                <div className={contextStatRowStyle}>
+                  <span className={contextStatLabelStyle}>Reasoning</span>
+                  <span className={contextStatValueStyle}>{(tokenUsage.reasoning / 1000).toFixed(1)}k</span>
+                </div>
+              )}
+              {(tokenUsage.cacheRead > 0 || tokenUsage.cacheWrite > 0) && (
+                <div className={contextStatRowStyle}>
+                  <span className={contextStatLabelStyle}>Cache</span>
+                  <span className={contextStatValueStyle}>{(tokenUsage.cacheRead / 1000).toFixed(1)}k / {(tokenUsage.cacheWrite / 1000).toFixed(1)}k</span>
+                </div>
+              )}
+              <div className={contextStatRowStyle}>
+                <span className={contextStatLabelStyle}>Usage</span>
+                <span className={contextStatValueStyle}>{Math.round(tokenPercent)}%</span>
+              </div>
+              <div className={contextStatRowStyle}>
+                <span className={contextStatLabelStyle}>Limit</span>
+                <span className={contextStatValueStyle}>{(maxTokens / 1000).toFixed(0)}k</span>
+              </div>
+            </div>
+          )}
         </div>
       )}
       {modelId && (
@@ -379,24 +458,7 @@ export function SessionHeader({
         </div>
       )}
       <div className={actionsGroupStyle}>
-        <button
-          className={toggleBtnStyle}
-          aria-label="Status"
-          type="button"
-        >
-          <div style={{ position: 'relative', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="8" cy="8" r="6" />
-              <circle cx="8" cy="8" r="2.5" fill="currentColor" stroke="none" />
-            </svg>
-            <div
-              className={statusDotStyle}
-              style={{
-                background: status === 'connected' ? 'var(--color-success)' : status === 'disconnected' || status === 'error' ? 'var(--color-error)' : 'var(--color-text-tertiary)',
-              }}
-            />
-          </div>
-        </button>
+        <StatusPopover />
         {onToggleTerminal && (
           <button
             className={cx(toggleBtnStyle, terminalOpen && toggleBtnActiveStyle)}

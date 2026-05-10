@@ -1,7 +1,6 @@
 import { css, cx } from '@linaria/core';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useServer } from '@/context/server';
 import { useSdk } from '@/context/sdk';
 import { useNotification } from '@/context/notification';
 import { Button } from '@/components/ui/button';
@@ -88,29 +87,6 @@ const closeBtn = css`
     background: var(--color-bg-tertiary);
     color: var(--color-text);
   }
-`;
-
-const statusRow = css`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 16px 12px;
-  flex-shrink: 0;
-`;
-
-const statusDot = css`
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-
-  &.connected { background: var(--color-success); }
-  &.disconnected { background: var(--color-error); }
-  &.connecting { background: var(--color-warning); }
-`;
-
-const statusText = css`
-  font-size: 13px;
-  color: var(--color-text-secondary);
 `;
 
 const newSessionRow = css`
@@ -278,11 +254,9 @@ export type MobileNavProps = {
 };
 
 export function MobileNav({ open, onClose, onSettings, project, projects, currentPath, projectSdk }: MobileNavProps) {
-  const { status } = useServer();
   const { client } = useSdk();
   const navigate = useNavigate();
   const notification = useNotification();
-  const isConnected = status === 'connected';
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -415,13 +389,6 @@ export function MobileNav({ open, onClose, onSettings, project, projects, curren
             <button className={closeBtn} onClick={onClose} aria-label="Close">
               ✕
             </button>
-          </div>
-
-          <div className={statusRow}>
-            <div className={cx(statusDot, isConnected ? 'connected' : status)} />
-            <span className={statusText}>
-              {isConnected ? 'Connected' : status}
-            </span>
           </div>
 
           <div className={newSessionRow}>
