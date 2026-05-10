@@ -57,6 +57,7 @@ const contentCollapsedStyle = css`
 
 export type MessageReasoningProps = {
   part: ReasoningPart;
+  streaming?: boolean;
   className?: string;
 };
 

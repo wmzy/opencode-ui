@@ -1,5 +1,5 @@
 import { css, cx } from '@linaria/core';
-import type { CSSProperties, UIEventHandler } from 'react';
+import type { CSSProperties, ReactNode, UIEventHandler } from 'react';
 import { useRef, useCallback } from 'react';
 
 const scrollAreaStyle = css`

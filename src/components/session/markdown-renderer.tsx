@@ -187,6 +187,7 @@ function getHighlighter(): Promise<ShikiHighlighter | null> {
 
 export type MarkdownRendererProps = {
   text: string;
+  streaming?: boolean;
   className?: string;
 };
 
