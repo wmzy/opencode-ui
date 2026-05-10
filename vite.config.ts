@@ -18,7 +18,7 @@ export default defineConfig({
     }),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'icons/*.svg'],
+      includeAssets: ['favicon.svg', 'icons/*.svg'],
       manifest: false,
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
