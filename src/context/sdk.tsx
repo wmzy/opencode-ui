@@ -14,25 +14,29 @@ export function SDKProvider({ children }: { children: ReactNode }) {
   const { active } = useServer();
 
   const auth = useMemo(() => {
+    if (!active) return undefined;
     if (active.username && active.password)
       return { username: active.username, password: active.password };
     if (active.password) return { password: active.password };
     return undefined;
-  }, [active.username, active.password]);
+  }, [active]);
+
+  const fallbackUrl = 'http://localhost:0';
+  const baseUrl = active?.url ?? fallbackUrl;
 
   const client = useMemo(
-    () => createSdk(active.url, auth),
-    [active.url, auth],
+    () => createSdk(baseUrl, auth),
+    [baseUrl, auth],
   );
 
   const getSdk = useCallback(
-    (directory: string) => createSdk(active.url, auth, directory),
-    [active.url, auth],
+    (directory: string) => createSdk(baseUrl, auth, directory),
+    [baseUrl, auth],
   );
 
   const value = useMemo<SdkContextValue>(
-    () => ({ client, baseUrl: active.url, getSdk }),
-    [client, active.url, getSdk],
+    () => ({ client, baseUrl, getSdk }),
+    [client, baseUrl, getSdk],
   );
 
   return <SdkContext.Provider value={value}>{children}</SdkContext.Provider>;

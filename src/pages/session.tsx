@@ -2,11 +2,10 @@ import { css } from '@linaria/core';
 import { useParams, useOutletContext } from 'react-router-dom';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useI18n } from '@/context/language';
-import { useServer } from '@/context/server';
+import { useSdk } from '@/context/sdk';
 import { usePrompt } from '@/context/prompt';
 import { useCommands } from '@/context/command';
 import { useNotification } from '@/context/notification';
-import { createSdk } from '@/lib/sdk';
 import type { Message, MessageWithParts } from '@/types/message';
 import type { Part } from '@/types/part';
 import { SessionHeader } from '@/components/session/session-header';
@@ -92,7 +91,7 @@ const messageAreaStyle = css`
 export function SessionPage() {
   const { id, dir } = useParams<{ id?: string; dir?: string }>();
   const { t } = useI18n();
-  const { active } = useServer();
+  const { getSdk } = useSdk();
   const prompt = usePrompt();
   const { onToggleSidebar } = useOutletContext<{ activeSessionId?: string; onToggleSidebar?: () => void }>();
   const notification = useNotification();
@@ -106,8 +105,8 @@ export function SessionPage() {
   }, [dir]);
 
   const sdk = useMemo(
-    () => createSdk(active.url, (active.username || active.password) ? { username: active.username, password: active.password ?? '' } : undefined, directory),
-    [active.url, active.username, active.password, directory],
+    () => getSdk(directory ?? ''),
+    [getSdk, directory],
   );
 
   const [messages, setMessages] = useState<Message[]>([]);

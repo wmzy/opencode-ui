@@ -13,7 +13,7 @@ export type ServerStatus = 'connecting' | 'connected' | 'disconnected' | 'error'
 type ServerContextValue = {
   servers: ServerConfig[];
   activeId: string | null;
-  active: ServerConfig;
+  active: ServerConfig | null;
   status: ServerStatus;
   addServer: (config: Omit<ServerConfig, 'id'>) => string;
   removeServer: (id: string) => void;
@@ -69,23 +69,24 @@ function extractHost(url: string): string {
   }
 }
 
-function createDefaultServer(): ServerConfig {
+function createDefaultServer(): ServerConfig | null {
   const params = new URLSearchParams(window.location.search);
   const token = params.get('auth_token');
+  if (!token) return null;
+
   let username: string | undefined;
   let password: string | undefined;
-  if (token) {
-    try {
-      const decoded = atob(token);
-      const sep = decoded.indexOf(':');
-      if (sep !== -1) {
-        username = decoded.slice(0, sep);
-        password = decoded.slice(sep + 1);
-      }
-    } catch {
-      // ignore
+  try {
+    const decoded = atob(token);
+    const sep = decoded.indexOf(':');
+    if (sep !== -1) {
+      username = decoded.slice(0, sep);
+      password = decoded.slice(sep + 1);
     }
+  } catch {
+    // ignore
   }
+
   const url = `${window.location.protocol}//${window.location.host}`;
   return {
     id: generateId(),
@@ -101,19 +102,26 @@ export function ServerProvider({ children }: { children: ReactNode }) {
     const loaded = loadData();
     if (loaded.servers.length === 0) {
       const default_ = createDefaultServer();
-      const initial: StoredData = { servers: [default_], activeId: default_.id };
-      saveData(initial);
-      return initial;
+      if (default_) {
+        const initial: StoredData = { servers: [default_], activeId: default_.id };
+        saveData(initial);
+        return initial;
+      }
     }
     return loaded;
   });
 
-  const [status, setStatus] = useState<ServerStatus>('connecting');
+  const [status, setStatus] = useState<ServerStatus>(() =>
+    data.servers.length > 0 ? 'connecting' : 'disconnected',
+  );
 
-  // useState initializer above ensures servers.length > 0
-  const active = data.servers.find(s => s.id === data.activeId) ?? data.servers[0]!;
+  const active = data.servers.find(s => s.id === data.activeId) ?? data.servers[0] ?? null;
 
   const checkHealth = useCallback(async () => {
+    if (!active) {
+      setStatus('disconnected');
+      return false;
+    }
     try {
       const headers: Record<string, string> = {};
       if (active.username || active.password) {
@@ -168,10 +176,12 @@ export function ServerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setActive = useCallback((id: string) => {
-    const next: StoredData = { ...data, activeId: id };
-    saveData(next);
-    window.location.href = import.meta.env.BASE_URL;
-  }, [data]);
+    setData(prev => {
+      const next: StoredData = { ...prev, activeId: id };
+      saveData(next);
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     checkHealth();

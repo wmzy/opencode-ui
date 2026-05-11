@@ -217,6 +217,8 @@ export function GlobalSyncProvider({ children }: { children: ReactNode }) {
   const clientRef = useRef<SSEClient | null>(null);
 
   useEffect(() => {
+    if (!active) return;
+
     const auth =
       active.username && active.password
         ? { username: active.username, password: active.password }
@@ -249,7 +251,7 @@ export function GlobalSyncProvider({ children }: { children: ReactNode }) {
       clientRef.current = null;
       setConnected(false);
     };
-  }, [active.url, active.username, active.password]);
+  }, [active]);
 
   return (
     <GlobalSyncContext.Provider value={{ state, connected }}>

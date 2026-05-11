@@ -225,8 +225,9 @@ export function TerminalTab({
 
       const sameOrigin =
         new URL(baseUrlRef.current, location.href).origin === location.origin;
-      const username = serverConnRef.current.username ?? 'opencode';
-      const password = serverConnRef.current.password ?? '';
+      const conn = serverConnRef.current;
+      const username = conn?.username ?? 'opencode';
+      const password = conn?.password ?? '';
 
       const socket = new WebSocket(
         terminalWebSocketURL({
@@ -238,7 +239,7 @@ export function TerminalTab({
           sameOrigin,
           username,
           password,
-          authToken: !!(serverConnRef.current.username ?? serverConnRef.current.password),
+          authToken: !!(conn?.username ?? conn?.password),
         }).toString(),
       );
       socket.binaryType = 'arraybuffer';

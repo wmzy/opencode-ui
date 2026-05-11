@@ -315,7 +315,7 @@ export function StatusPopover() {
                   style={{ background: statusDotColor }}
                 />
                 <div className={serverInfoStyle}>
-                  <div className={serverUrlStyle}>{active.url}</div>
+                  <div className={serverUrlStyle}>{active?.url ?? '—'}</div>
                   <div className={serverStatusStyle}>
                     {serverStatus === 'connected'
                       ? 'Connected'
