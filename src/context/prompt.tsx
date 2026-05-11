@@ -15,6 +15,7 @@ type PromptState = {
   parts: PromptPart[];
   model?: { providerID: string; modelID: string };
   agent?: string;
+  reasoningEffort?: 'low' | 'medium' | 'high';
   streaming: boolean;
   followups: FollowupItem[];
 };
@@ -28,6 +29,7 @@ type PromptContextValue = {
   clearParts: () => void;
   setModel: (model: { providerID: string; modelID: string } | undefined) => void;
   setAgent: (agent: string | undefined) => void;
+  setReasoningEffort: (effort: 'low' | 'medium' | 'high' | undefined) => void;
   send: (sessionID: string, sdk: OpenCodeSdk) => Promise<void>;
   abort: (sessionID: string, sdk: OpenCodeSdk) => Promise<void>;
   queueFollowup: (item: Omit<FollowupItem, 'id'>) => void;
@@ -53,6 +55,7 @@ export function PromptProvider({ children }: { children: ReactNode }) {
     parts: [],
     model: undefined,
     agent: undefined,
+    reasoningEffort: undefined,
     streaming: false,
     followups: [],
   });
@@ -100,6 +103,10 @@ export function PromptProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, agent }));
   }, []);
 
+  const setReasoningEffort = useCallback((reasoningEffort: 'low' | 'medium' | 'high' | undefined) => {
+    setState((prev) => ({ ...prev, reasoningEffort }));
+  }, []);
+
   const send = useCallback(async (sessionID: string, sdk: OpenCodeSdk) => {
     const currentParts = state.parts;
     if (currentParts.length === 0) return;
@@ -115,6 +122,7 @@ export function PromptProvider({ children }: { children: ReactNode }) {
           parts: currentParts,
           ...(state.model ? { model: state.model } : {}),
           ...(state.agent ? { agent: state.agent } : {}),
+          ...(state.reasoningEffort ? { reasoningEffort: state.reasoningEffort } : {}),
         },
         signal: controller.signal,
       });
@@ -125,7 +133,7 @@ export function PromptProvider({ children }: { children: ReactNode }) {
       abortRef.current = null;
       setState((prev) => ({ ...prev, streaming: false }));
     }
-  }, [state.parts, state.model, state.agent]);
+  }, [state.parts, state.model, state.agent, state.reasoningEffort]);
 
   const abort = useCallback(async (sessionID: string, sdk: OpenCodeSdk) => {
     abortRef.current?.abort();
@@ -157,6 +165,7 @@ export function PromptProvider({ children }: { children: ReactNode }) {
       parts: [],
       model: undefined,
       agent: undefined,
+      reasoningEffort: undefined,
       streaming: false,
       followups: [],
     });
@@ -173,6 +182,7 @@ export function PromptProvider({ children }: { children: ReactNode }) {
         clearParts,
         setModel,
         setAgent,
+        setReasoningEffort,
         send,
         abort,
         queueFollowup,

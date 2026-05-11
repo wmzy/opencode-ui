@@ -37,7 +37,7 @@ export function useProviders(sdk: OpenCodeSdk | null): UseProvidersResult {
         const allProviders = ((data?.all ?? []) as Provider[]).map((p) => ({
           ...p,
           models: Object.fromEntries(
-            Object.entries(p.models).filter(([, m]) => m.status !== 'deprecated'),
+            Object.entries(p.models).filter(([, m]) => m.status === 'active'),
           ),
         }));
         setProviders(allProviders);

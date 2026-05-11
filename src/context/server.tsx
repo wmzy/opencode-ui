@@ -15,6 +15,7 @@ type ServerContextValue = {
   activeId: string | null;
   active: ServerConfig | null;
   status: ServerStatus;
+  error: string | null;
   addServer: (config: Omit<ServerConfig, 'id'>) => string;
   removeServer: (id: string) => void;
   updateServer: (id: string, partial: Partial<Omit<ServerConfig, 'id'>>) => void;
@@ -114,14 +115,18 @@ export function ServerProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<ServerStatus>(() =>
     data.servers.length > 0 ? 'connecting' : 'disconnected',
   );
+  const [error, setError] = useState<string | null>(null);
 
   const active = data.servers.find(s => s.id === data.activeId) ?? data.servers[0] ?? null;
 
   const checkHealth = useCallback(async () => {
     if (!active) {
       setStatus('disconnected');
+      setError(null);
       return false;
     }
+    setStatus('connecting');
+    setError(null);
     try {
       const headers: Record<string, string> = {};
       if (active.username || active.password) {
@@ -132,19 +137,27 @@ export function ServerProvider({ children }: { children: ReactNode }) {
         setStatus('connected');
         return true;
       }
-    } catch {
-      // ignore
+      setStatus('error');
+      setError(`Server responded with ${resp.status} ${resp.statusText}`);
+    } catch (err) {
+      setStatus('error');
+      setError(err instanceof TypeError ? 'Network error: cannot reach server' : 'Connection failed');
     }
-    setStatus('disconnected');
     return false;
   }, [active]);
 
   const addServer = useCallback((config: Omit<ServerConfig, 'id'>) => {
     const id = generateId();
     setData(prev => {
+      const existing = prev.servers.find(s => s.url === config.url);
+      if (existing) {
+        const next: StoredData = { ...prev, activeId: existing.id };
+        saveData(next);
+        return next;
+      }
       const next: StoredData = {
         servers: [...prev.servers, { ...config, id }],
-        activeId: prev.activeId,
+        activeId: id,
       };
       saveData(next);
       return next;
@@ -195,6 +208,7 @@ export function ServerProvider({ children }: { children: ReactNode }) {
       activeId: data.activeId,
       active,
       status,
+      error,
       addServer,
       removeServer,
       updateServer,

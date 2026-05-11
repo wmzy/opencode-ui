@@ -69,14 +69,14 @@ export interface OpenCodeSdk {
     status(opts?: RequestOptions): Promise<Record<string, unknown>>;
     message: {
       list(sessionID: string, opts?: RequestOptions & { limit?: number; before?: string }): Promise<unknown[]>;
-      create(sessionID: string, opts: JsonRequestOptions & { body: { parts: unknown[]; messageID?: string; model?: { providerID: string; modelID: string }; agent?: string; noReply?: boolean; tools?: Record<string, boolean>; format?: unknown; system?: string; variant?: string } }): Promise<unknown>;
+      create(sessionID: string, opts: JsonRequestOptions & { body: { parts: unknown[]; messageID?: string; model?: { providerID: string; modelID: string }; agent?: string; noReply?: boolean; tools?: Record<string, boolean>; format?: unknown; system?: string; variant?: string; reasoningEffort?: string } }): Promise<unknown>;
       get(sessionID: string, messageID: string, opts?: RequestOptions): Promise<unknown>;
       delete(sessionID: string, messageID: string, opts?: RequestOptions): Promise<boolean>;
     };
     diff(sessionID: string, opts?: RequestOptions & { messageID?: string }): Promise<unknown[]>;
     children(sessionID: string, opts?: RequestOptions): Promise<unknown[]>;
     todo(sessionID: string, opts?: RequestOptions): Promise<unknown[]>;
-    promptAsync(sessionID: string, opts: JsonRequestOptions & { body: { parts: unknown[]; messageID?: string; model?: { providerID: string; modelID: string }; agent?: string; noReply?: boolean; tools?: Record<string, boolean>; format?: unknown; system?: string; variant?: string } }): Promise<void>;
+    promptAsync(sessionID: string, opts: JsonRequestOptions & { body: { parts: unknown[]; messageID?: string; model?: { providerID: string; modelID: string }; agent?: string; noReply?: boolean; tools?: Record<string, boolean>; format?: unknown; system?: string; variant?: string; reasoningEffort?: string } }): Promise<void>;
   };
   file: {
     list(opts: RequestOptions & { path: string }): Promise<unknown[]>;

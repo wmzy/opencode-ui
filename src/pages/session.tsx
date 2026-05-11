@@ -348,6 +348,8 @@ export function SessionPage() {
           models={models}
           currentModel={prompt.state.model}
           onModelChange={prompt.setModel}
+          reasoningEffort={prompt.state.reasoningEffort}
+          onReasoningEffortChange={prompt.setReasoningEffort}
           onAttachFile={handleAttachFile}
           modelSelectorTriggerRef={modelSelectorTriggerRef}
         />
@@ -409,6 +411,8 @@ export function SessionPage() {
         models={models}
         currentModel={prompt.state.model}
         onModelChange={prompt.setModel}
+        reasoningEffort={prompt.state.reasoningEffort}
+        onReasoningEffortChange={prompt.setReasoningEffort}
         onAttachFile={handleAttachFile}
         modelSelectorTriggerRef={modelSelectorTriggerRef}
       />

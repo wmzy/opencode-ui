@@ -2,7 +2,7 @@ import { css, cx } from '@linaria/core';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSdk } from '@/context/sdk';
-import { useServer } from '@/context/server';
+import { useServer, type ServerConfig } from '@/context/server';
 import { useI18n } from '@/context/language';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -203,6 +203,26 @@ const savedServerDot = css`
   }
 `;
 
+const deleteBtnStyle = css`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+
+  &:hover {
+    background: var(--color-bg-tertiary);
+    color: var(--color-error);
+  }
+`;
+
 const formDivider = css`
   display: flex;
   align-items: center;
@@ -239,8 +259,53 @@ function extractHost(url: string): string {
   }
 }
 
+function ServerList({
+  servers,
+  activeId,
+  onSelect,
+  onRemove,
+}: {
+  servers: ServerConfig[];
+  activeId: string | null;
+  onSelect: (id: string) => void;
+  onRemove: (id: string) => void;
+}) {
+  if (servers.length === 0) return null;
+  return (
+    <div className={savedServersList}>
+      {servers.map(server => (
+        <div
+          key={server.id}
+          className={savedServerCard}
+          onClick={() => onSelect(server.id)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={e => { if (e.key === 'Enter') onSelect(server.id); }}
+        >
+          <span className={cx(savedServerDot, server.id === activeId && 'active')} />
+          <div className={savedServerInfo}>
+            <span className={savedServerName}>{server.name}</span>
+            <span className={savedServerUrl}>{server.url}</span>
+          </div>
+          <button
+            className={deleteBtnStyle}
+            onClick={e => { e.stopPropagation(); onRemove(server.id); }}
+            aria-label="Remove server"
+            title="Remove server"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function ServerConnectForm() {
-  const { addServer, setActive, servers } = useServer();
+  const { addServer, setActive, removeServer, servers } = useServer();
   const [url, setUrl] = useState('');
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
@@ -259,45 +324,23 @@ function ServerConnectForm() {
     if (!trimmedUrl) return;
 
     const serverName = name.trim() || extractHost(trimmedUrl);
-    const id = addServer({
+    addServer({
       name: serverName,
       url: trimmedUrl,
       username: username.trim() || undefined,
       password: password.trim() || undefined,
     });
-    setActive(id);
   };
-
-  const otherServers = servers.filter(s => {
-    const trimmedUrl = url.trim().replace(/\/+$/, '');
-    return !trimmedUrl || s.url !== trimmedUrl;
-  });
 
   return (
     <div className={connectSection}>
-      {otherServers.length > 0 && (
-        <div className={savedServersList}>
-          {otherServers.map(server => (
-            <div
-              key={server.id}
-              className={savedServerCard}
-              onClick={() => setActive(server.id)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={e => { if (e.key === 'Enter') setActive(server.id); }}
-            >
-              <span className={savedServerDot} />
-              <div className={savedServerInfo}>
-                <span className={savedServerName}>{server.name}</span>
-                <span className={savedServerUrl}>{server.url}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {otherServers.length > 0 && <div className={formDivider}>or add new</div>}
-
+      <ServerList
+        servers={servers}
+        activeId={null}
+        onSelect={setActive}
+        onRemove={removeServer}
+      />
+      {servers.length > 0 && <div className={formDivider}>or add new</div>}
       <form className={connectForm} onSubmit={handleSubmit}>
         <Input
           label="Server URL"
@@ -342,7 +385,7 @@ function ServerConnectForm() {
 }
 
 export function HomePage() {
-  const { status, active } = useServer();
+  const { status, active, error, servers, activeId, setActive, removeServer } = useServer();
   const { client } = useSdk();
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -392,7 +435,8 @@ export function HomePage() {
   const statusLabel =
     status === 'connected' ? 'Connected' :
       status === 'connecting' ? 'Connecting...' :
-        'Disconnected';
+        status === 'error' ? 'Connection failed' :
+          'Disconnected';
 
   return (
     <div className={homeContainer}>
@@ -410,6 +454,32 @@ export function HomePage() {
         <div className={statusRow}>
           <span className={cx(dot, status)} />
           <span>{statusLabel}</span>
+        </div>
+      )}
+
+      {status === 'error' && error && (
+        <div style={{ maxWidth: 480, width: '100%' }}>
+          <div className={statusRow} style={{ marginBottom: 8 }}>
+            <span className={cx(dot, status)} style={{ background: 'var(--color-error)' }} />
+            <span style={{ color: 'var(--color-error)', fontSize: '0.875rem' }}>{error}</span>
+          </div>
+          <ServerList
+            servers={servers}
+            activeId={activeId}
+            onSelect={setActive}
+            onRemove={removeServer}
+          />
+        </div>
+      )}
+
+      {(status === 'connected' || status === 'connecting') && servers.length > 1 && (
+        <div style={{ maxWidth: 480, width: '100%' }}>
+          <ServerList
+            servers={servers}
+            activeId={activeId}
+            onSelect={setActive}
+            onRemove={removeServer}
+          />
         </div>
       )}
 

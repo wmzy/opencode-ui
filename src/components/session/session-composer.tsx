@@ -261,6 +261,8 @@ export type SessionComposerProps = {
   models: FlatModel[];
   currentModel?: { providerID: string; modelID: string };
   onModelChange: (model: { providerID: string; modelID: string } | undefined) => void;
+  reasoningEffort?: 'low' | 'medium' | 'high';
+  onReasoningEffortChange: (effort: 'low' | 'medium' | 'high' | undefined) => void;
   onAttachFile?: () => void;
   modelSelectorTriggerRef?: React.RefObject<HTMLButtonElement | null>;
 };
@@ -280,11 +282,14 @@ export function SessionComposer({
   models,
   currentModel,
   onModelChange,
+  reasoningEffort,
+  onReasoningEffortChange,
   onAttachFile,
   modelSelectorTriggerRef,
 }: SessionComposerProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const agentTriggerRef = useRef<HTMLButtonElement>(null);
+  const agentPopupRef = useRef<HTMLDivElement>(null);
   const [composing, setComposing] = useState(false);
   const [modelOpen, setModelOpen] = useState(false);
   const [modelAnchorRect, setModelAnchorRect] = useState<DOMRect>();
@@ -312,6 +317,7 @@ export function SessionComposer({
     const handler = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (agentTriggerRef.current?.contains(target)) return;
+      if (agentPopupRef.current?.contains(target)) return;
       setAgentOpen(false);
     };
     const timer = setTimeout(() => window.addEventListener('mousedown', handler), 0);
@@ -368,11 +374,35 @@ export function SessionComposer({
     [onAgentChange],
   );
 
+  const handleReasoningEffortToggle = useCallback(() => {
+    if (!reasoningEffort) {
+      onReasoningEffortChange('medium');
+    } else if (reasoningEffort === 'low') {
+      onReasoningEffortChange(undefined);
+    } else if (reasoningEffort === 'medium') {
+      onReasoningEffortChange('high');
+    } else {
+      onReasoningEffortChange('low');
+    }
+  }, [reasoningEffort, onReasoningEffortChange]);
+
   const currentModelName = currentModel
     ? models.find(
       (m) => m.provider.id === currentModel.providerID && m.id === currentModel.modelID,
     )?.name ?? currentModel.modelID
     : undefined;
+
+  const currentModelSupportsReasoning = currentModel
+    ? models.find(
+      (m) => m.provider.id === currentModel.providerID && m.id === currentModel.modelID,
+    )?.capabilities.reasoning === true
+    : false;
+
+  const reasoningEffortLabel: Record<'low' | 'medium' | 'high', string> = {
+    low: 'Low',
+    medium: 'Med',
+    high: 'High',
+  };
 
   return (
     <div className={cx(composerStyle, className)}>
@@ -427,6 +457,7 @@ export function SessionComposer({
             </button>
             {agentOpen && (
               <div
+                ref={agentPopupRef}
                 className={agentPopupStyle}
                 style={{
                   position: 'fixed',
@@ -462,6 +493,18 @@ export function SessionComposer({
               <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
                 <path d="M5 7L1 3h8z" />
               </svg>
+            </span>
+          </button>
+        )}
+        {currentModelSupportsReasoning && (
+          <button
+            className={cx(toolbarBtnStyle, reasoningEffort && toolbarBtnActiveStyle)}
+            onClick={handleReasoningEffortToggle}
+            aria-label="Reasoning effort"
+            title={`Thinking depth: ${reasoningEffort ?? 'off'}`}
+          >
+            <span className={toolbarBtnLabelStyle}>
+              💭 {reasoningEffort ? reasoningEffortLabel[reasoningEffort] : 'Off'}
             </span>
           </button>
         )}
