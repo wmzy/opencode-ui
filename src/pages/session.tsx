@@ -18,6 +18,8 @@ import { SessionQuestionDock } from '@/components/session/session-question-dock'
 import { SessionTodoDock } from '@/components/session/session-todo-dock';
 import { TerminalPanel } from '@/components/terminal/terminal-panel';
 import { Spinner } from '@/components/ui/spinner';
+import { useAgents } from '@/hooks/use-agents';
+import { useProviders } from '@/hooks/use-providers';
 
 const sessionContainer = css`
   display: flex;
@@ -104,8 +106,8 @@ export function SessionPage() {
   }, [dir]);
 
   const sdk = useMemo(
-    () => createSdk(active.url, active.authToken && active.password ? { password: active.password } : undefined, directory),
-    [active.url, active.authToken, active.password, directory],
+    () => createSdk(active.url, (active.username || active.password) ? { username: active.username, password: active.password ?? '' } : undefined, directory),
+    [active.url, active.username, active.password, directory],
   );
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -118,11 +120,30 @@ export function SessionPage() {
   const [terminalHeight, setTerminalHeight] = useState(200);
   const [sidePanelOpen, setSidePanelOpen] = useState(false);
   const { registerCommand } = useCommands();
+  const { agents } = useAgents(sdk);
+  const { models, defaultModel } = useProviders(sdk);
+  const modelSelectorTriggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!id) return;
     notification.session.markViewed(id);
   }, [id, notification.session]);
+
+  useEffect(() => {
+    const visible = agents.filter((a) => a.mode !== 'subagent' && !a.hidden);
+    if (visible.length > 0 && !prompt.state.agent) {
+      const primary = visible.find((a) => a.mode === 'primary') ?? visible[0];
+      if (primary) prompt.setAgent(primary.name);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- init-only: set default agent once
+  }, [agents.length, prompt.state.agent]);
+
+  useEffect(() => {
+    if (models.length > 0 && !prompt.state.model && defaultModel) {
+      prompt.setModel(defaultModel);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- init-only: set default model once
+  }, [models.length, prompt.state.model, defaultModel]);
 
   useEffect(() => {
     const unregisters: (() => void)[] = [];
@@ -156,7 +177,7 @@ export function SessionPage() {
       label: 'Choose Model',
       group: 'Model',
       shortcut: 'mod+\'',
-      action: () => {},
+      action: () => { modelSelectorTriggerRef.current?.click(); },
     }));
 
     unregisters.push(registerCommand({
@@ -164,7 +185,14 @@ export function SessionPage() {
       label: 'Cycle Agent',
       group: 'Model',
       shortcut: 'mod+.',
-      action: () => {},
+      action: () => {
+        const visible = agents.filter((a) => a.mode !== 'subagent' && !a.hidden);
+        if (visible.length === 0) return;
+        const current = prompt.state.agent ?? '';
+        const idx = visible.findIndex((a) => a.name === current);
+        const next = visible[(idx + 1) % visible.length];
+        prompt.setAgent(next.name);
+      },
     }));
 
     unregisters.push(registerCommand({
@@ -184,6 +212,7 @@ export function SessionPage() {
     }));
 
     return () => unregisters.forEach(fn => fn());
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- command registration: stable on id/sdk change
   }, [id, sdk, registerCommand]);
 
   useEffect(() => {
@@ -276,6 +305,18 @@ export function SessionPage() {
     }
   }, [id, sdk]);
 
+  const handleAttachFile = useCallback(() => {
+    // eslint-disable-next-line no-alert -- file path input via prompt dialog
+    const path = window.prompt('Enter file path to attach:');
+    if (!path?.trim()) return;
+    prompt.addPart({
+      type: 'file',
+      url: path.startsWith('file://') ? path : `file://${path}`,
+      mime: 'text/plain',
+      filename: path.split('/').pop() ?? path,
+    });
+  }, [prompt]);
+
   const isStreaming = prompt.state.streaming;
 
   const tokenUsage = useMemo(() => {
@@ -302,6 +343,14 @@ export function SessionPage() {
           onSend={handleSend}
           streaming={isStreaming}
           placeholder={t('session.placeholder')}
+          agents={agents}
+          currentAgent={prompt.state.agent}
+          onAgentChange={prompt.setAgent}
+          models={models}
+          currentModel={prompt.state.model}
+          onModelChange={prompt.setModel}
+          onAttachFile={handleAttachFile}
+          modelSelectorTriggerRef={modelSelectorTriggerRef}
         />
       </div>
     );
@@ -355,6 +404,14 @@ export function SessionPage() {
         onStop={handleStop}
         streaming={isStreaming}
         placeholder={t('session.placeholder')}
+        agents={agents}
+        currentAgent={prompt.state.agent}
+        onAgentChange={prompt.setAgent}
+        models={models}
+        currentModel={prompt.state.model}
+        onModelChange={prompt.setModel}
+        onAttachFile={handleAttachFile}
+        modelSelectorTriggerRef={modelSelectorTriggerRef}
       />
       {terminalOpen && (
         <TerminalPanel

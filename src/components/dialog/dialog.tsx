@@ -92,7 +92,7 @@ export type DialogProps = {
   raw?: boolean;
 };
 
-export function Dialog({ open, onClose, title, children, footer, raw = false, className: _className }: DialogProps) {
+export function Dialog({ open, onClose, title, children, footer, raw = false, className }: DialogProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
   const handleKeyDown = useCallback(
@@ -121,7 +121,7 @@ export function Dialog({ open, onClose, title, children, footer, raw = false, cl
     <div className={cx(overlayStyle, open && 'open')} onClick={onClose}>
       <div
         ref={dialogRef}
-        className={cx(dialogStyle, open && 'open')}
+        className={cx(dialogStyle, open && 'open', className)}
         onClick={e => e.stopPropagation()}
       >
         {title && (

@@ -1,10 +1,13 @@
 import { css } from '@linaria/core';
 import { useState, type ReactNode } from 'react';
 import { Dialog } from '../dialog/dialog';
+import { Collapsible } from '../ui/collapsible';
+import { useIsMobile } from '@/hooks/use-media-query';
 import { SettingsGeneral } from './settings-general';
 import { SettingsKeybinds } from './settings-keybinds';
 import { SettingsProviders } from './settings-providers';
 import { SettingsModels } from './settings-models';
+import { SettingsServers } from './settings-servers';
 
 const settingsDialogStyle = css`
   max-width: 860px;
@@ -86,18 +89,37 @@ const versionStyle = css`
   line-height: 1.5;
 `;
 
+const mobileDialogStyle = css`
+  max-width: 860px;
+  width: calc(100vw - 16px);
+  height: calc(100vh - 40px);
+  max-height: none;
+  position: relative;
+`;
+
+const accordionStyle = css`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  overflow-y: auto;
+  height: 100%;
+`;
+
 type SettingsTab = {
   id: string;
   label: string;
   icon: string;
   section?: string;
+  content: ReactNode;
 };
 
 const TABS: SettingsTab[] = [
-  { id: 'general', label: 'General', icon: '⚙', section: 'Desktop' },
-  { id: 'keybinds', label: 'Shortcuts', icon: '⌨', section: 'Desktop' },
-  { id: 'providers', label: 'Providers', icon: '🔌', section: 'Server' },
-  { id: 'models', label: 'Models', icon: '🤖', section: 'Server' },
+  { id: 'general', label: 'General', icon: '⚙', section: 'Desktop', content: <SettingsGeneral /> },
+  { id: 'keybinds', label: 'Shortcuts', icon: '⌨', section: 'Desktop', content: <SettingsKeybinds /> },
+  { id: 'servers', label: 'Servers', icon: '🌐', section: 'Server', content: <SettingsServers /> },
+  { id: 'providers', label: 'Providers', icon: '🔌', section: 'Server', content: <SettingsProviders /> },
+  { id: 'models', label: 'Models', icon: '🤖', section: 'Server', content: <SettingsModels /> },
 ];
 
 export type SettingsDialogProps = {
@@ -107,6 +129,31 @@ export type SettingsDialogProps = {
 };
 
 export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
+  const isMobile = useIsMobile();
+
+  if (isMobile) {
+    return (
+      <Dialog open={open} onClose={onClose} className={mobileDialogStyle} raw>
+        <div className={accordionStyle}>
+          {TABS.map(tab => (
+            <Collapsible
+              key={tab.id}
+              trigger={
+                <span>{tab.icon} {tab.label}</span>
+              }
+            >
+              {tab.content}
+            </Collapsible>
+          ))}
+        </div>
+      </Dialog>
+    );
+  }
+
+  return <DesktopSettings open={open} onClose={onClose} />;
+}
+
+function DesktopSettings({ open, onClose }: SettingsDialogProps) {
   const [activeTab, setActiveTab] = useState('general');
 
   const tabsBySection = TABS.reduce<Record<string, SettingsTab[]>>((acc, tab) => {
@@ -116,20 +163,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
     return acc;
   }, {});
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'general':
-        return <GeneralPlaceholder />;
-      case 'keybinds':
-        return <KeybindsPlaceholder />;
-      case 'providers':
-        return <ProvidersPlaceholder />;
-      case 'models':
-        return <ModelsPlaceholder />;
-      default:
-        return null;
-    }
-  };
+  const activeContent = TABS.find(t => t.id === activeTab)?.content ?? null;
 
   return (
     <Dialog open={open} onClose={onClose} className={settingsDialogStyle} raw>
@@ -158,29 +192,14 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
             v0.1.0
           </div>
         </div>
-        <div className={contentAreaStyle}>{renderContent()}</div>
+        <div className={contentAreaStyle}>{activeContent}</div>
       </div>
     </Dialog>
   );
 }
 
-function GeneralPlaceholder() {
-  return <SettingsGeneral />;
-}
-
-function KeybindsPlaceholder() {
-  return <SettingsKeybinds />;
-}
-
-function ProvidersPlaceholder() {
-  return <SettingsProviders />;
-}
-
-function ModelsPlaceholder() {
-  return <SettingsModels />;
-}
-
 export { SettingsGeneral } from './settings-general';
 export { SettingsKeybinds } from './settings-keybinds';
+export { SettingsServers } from './settings-servers';
 export { SettingsProviders } from './settings-providers';
 export { SettingsModels } from './settings-models';

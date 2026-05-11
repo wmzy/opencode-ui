@@ -53,7 +53,7 @@ export type ButtonProps = {
   children: ReactNode;
   className?: string;
   disabled?: boolean;
-} & Omit<ComponentPropsWithoutRef<'button'>, 'type'>;
+} & Omit<ComponentPropsWithoutRef<'button'>, 'size'>;
 
 export function Button({
   variant = 'primary',

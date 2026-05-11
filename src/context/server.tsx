@@ -1,98 +1,177 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 
-export type ServerConnection = {
-  type: 'http';
+export type ServerConfig = {
+  id: string;
+  name: string;
   url: string;
   username?: string;
   password?: string;
-  authToken?: boolean;
 };
 
 export type ServerStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
 
-type ServerState = {
-  connections: ServerConnection[];
-  activeIndex: number;
-  status: ServerStatus;
-  lastHealthCheck: number | null;
-};
-
 type ServerContextValue = {
-  state: ServerState;
-  active: ServerConnection;
+  servers: ServerConfig[];
+  activeId: string | null;
+  active: ServerConfig;
   status: ServerStatus;
-  addConnection: (conn: ServerConnection) => void;
-  removeConnection: (index: number) => void;
-  setActive: (index: number) => void;
+  addServer: (config: Omit<ServerConfig, 'id'>) => string;
+  removeServer: (id: string) => void;
+  updateServer: (id: string, partial: Partial<Omit<ServerConfig, 'id'>>) => void;
+  setActive: (id: string) => void;
   checkHealth: () => Promise<boolean>;
 };
 
 const ServerContext = createContext<ServerContextValue | null>(null);
 
-function authFromToken(token: string | null): { username: string; password: string } | undefined {
-  if (!token) return undefined;
+const STORAGE_KEY = 'opencode-servers';
+
+type StoredData = {
+  servers: ServerConfig[];
+  activeId: string | null;
+};
+
+function generateId(): string {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+function loadData(): StoredData {
   try {
-    const decoded = atob(token);
-    const sep = decoded.indexOf(':');
-    if (sep === -1) return undefined;
-    return { username: decoded.slice(0, sep), password: decoded.slice(sep + 1) };
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed: unknown = JSON.parse(raw);
+      if (
+        typeof parsed === 'object' && parsed !== null &&
+        'servers' in parsed && Array.isArray((parsed as StoredData).servers)
+      ) {
+        return parsed as StoredData;
+      }
+    }
   } catch {
-    return undefined;
+    // ignore
+  }
+  return { servers: [], activeId: null };
+}
+
+function saveData(data: StoredData): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch {
+    // ignore
   }
 }
 
-function getInitialConnection(): ServerConnection {
+function extractHost(url: string): string {
+  try {
+    return new URL(url).host;
+  } catch {
+    return url;
+  }
+}
+
+function createDefaultServer(): ServerConfig {
   const params = new URLSearchParams(window.location.search);
   const token = params.get('auth_token');
-  const auth = authFromToken(token);
+  let username: string | undefined;
+  let password: string | undefined;
+  if (token) {
+    try {
+      const decoded = atob(token);
+      const sep = decoded.indexOf(':');
+      if (sep !== -1) {
+        username = decoded.slice(0, sep);
+        password = decoded.slice(sep + 1);
+      }
+    } catch {
+      // ignore
+    }
+  }
   const url = `${window.location.protocol}//${window.location.host}`;
   return {
-    type: 'http',
+    id: generateId(),
+    name: extractHost(url),
     url,
-    ...auth,
-    authToken: !!auth,
+    username,
+    password,
   };
 }
 
 export function ServerProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<ServerState>(() => ({
-    connections: [getInitialConnection()],
-    activeIndex: 0,
-    status: 'connecting',
-    lastHealthCheck: null,
-  }));
+  const [data, setData] = useState<StoredData>(() => {
+    const loaded = loadData();
+    if (loaded.servers.length === 0) {
+      const default_ = createDefaultServer();
+      const initial: StoredData = { servers: [default_], activeId: default_.id };
+      saveData(initial);
+      return initial;
+    }
+    return loaded;
+  });
 
-  const active = state.connections[state.activeIndex];
+  const [status, setStatus] = useState<ServerStatus>('connecting');
+
+  // useState initializer above ensures servers.length > 0
+  const active = data.servers.find(s => s.id === data.activeId) ?? data.servers[0]!;
 
   const checkHealth = useCallback(async () => {
     try {
-      const resp = await fetch(`${active.url}/global/health`);
+      const headers: Record<string, string> = {};
+      if (active.username || active.password) {
+        headers['Authorization'] = `Basic ${btoa(`${active.username ?? ''}:${active.password ?? ''}`)}`;
+      }
+      const resp = await fetch(`${active.url}/global/health`, { headers });
       if (resp.ok) {
-        setState(s => ({ ...s, status: 'connected', lastHealthCheck: Date.now() }));
+        setStatus('connected');
         return true;
       }
     } catch {
       // ignore
     }
-    setState(s => ({ ...s, status: 'disconnected' }));
+    setStatus('disconnected');
     return false;
-  }, [active.url]);
+  }, [active]);
 
-  const addConnection = useCallback((conn: ServerConnection) => {
-    setState(s => ({ ...s, connections: [...s.connections, conn] }));
+  const addServer = useCallback((config: Omit<ServerConfig, 'id'>) => {
+    const id = generateId();
+    setData(prev => {
+      const next: StoredData = {
+        servers: [...prev.servers, { ...config, id }],
+        activeId: prev.activeId,
+      };
+      saveData(next);
+      return next;
+    });
+    return id;
   }, []);
 
-  const removeConnection = useCallback((index: number) => {
-    setState(s => {
-      const connections = s.connections.filter((_, i) => i !== index);
-      const activeIndex = Math.min(s.activeIndex, connections.length - 1);
-      return { ...s, connections, activeIndex };
+  const removeServer = useCallback((id: string) => {
+    setData(prev => {
+      const servers = prev.servers.filter(s => s.id !== id);
+      const activeId = prev.activeId === id
+        ? (servers[0]?.id ?? null)
+        : prev.activeId;
+      const next: StoredData = { servers, activeId };
+      saveData(next);
+      return next;
     });
   }, []);
 
-  const setActive = useCallback((index: number) => {
-    setState(s => ({ ...s, activeIndex: index, status: 'connecting' }));
+  const updateServer = useCallback((id: string, partial: Partial<Omit<ServerConfig, 'id'>>) => {
+    setData(prev => {
+      const servers = prev.servers.map(s =>
+        s.id === id ? { ...s, ...partial } : s,
+      );
+      const next: StoredData = { ...prev, servers };
+      saveData(next);
+      return next;
+    });
   }, []);
+
+  const setActive = useCallback((id: string) => {
+    const next: StoredData = { ...data, activeId: id };
+    saveData(next);
+    window.location.href = '/';
+  }, [data]);
 
   useEffect(() => {
     checkHealth();
@@ -101,7 +180,18 @@ export function ServerProvider({ children }: { children: ReactNode }) {
   }, [checkHealth]);
 
   return (
-    <ServerContext.Provider value={{ state, active, status: state.status, addConnection, removeConnection, setActive, checkHealth }}>
+    <ServerContext.Provider value={{
+      servers: data.servers,
+      activeId: data.activeId,
+      active,
+      status,
+      addServer,
+      removeServer,
+      updateServer,
+      setActive,
+      checkHealth,
+    }}
+    >
       {children}
     </ServerContext.Provider>
   );

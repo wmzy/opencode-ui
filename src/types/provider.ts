@@ -108,7 +108,9 @@ export type Agent = {
   name: string;
   description?: string;
   mode: 'subagent' | 'primary' | 'all';
-  builtIn: boolean;
+  native?: boolean;
+  hidden?: boolean;
+  builtIn?: boolean;
   topP?: number;
   temperature?: number;
   color?: string;
@@ -125,6 +127,7 @@ export type Agent = {
     modelID: string;
     providerID: string;
   };
+  variant?: string;
   prompt?: string;
   tools: {
     [key: string]: boolean;
@@ -133,6 +136,7 @@ export type Agent = {
     [key: string]: unknown;
   };
   maxSteps?: number;
+  steps?: number;
 };
 
 export type Symbol = {

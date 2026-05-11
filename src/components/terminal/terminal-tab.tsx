@@ -238,7 +238,7 @@ export function TerminalTab({
           sameOrigin,
           username,
           password,
-          authToken: serverConnRef.current.authToken,
+          authToken: !!(serverConnRef.current.username ?? serverConnRef.current.password),
         }).toString(),
       );
       socket.binaryType = 'arraybuffer';
