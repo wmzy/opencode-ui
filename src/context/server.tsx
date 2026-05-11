@@ -170,7 +170,7 @@ export function ServerProvider({ children }: { children: ReactNode }) {
   const setActive = useCallback((id: string) => {
     const next: StoredData = { ...data, activeId: id };
     saveData(next);
-    window.location.href = '/';
+    window.location.href = import.meta.env.BASE_URL;
   }, [data]);
 
   useEffect(() => {
