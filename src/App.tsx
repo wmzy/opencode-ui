@@ -37,7 +37,7 @@ export function App() {
                           <TerminalProvider>
                             <SyncProvider>
                               <PromptProvider>
-                                <BrowserRouter>
+                                <BrowserRouter basename={import.meta.env.BASE_URL}>
                                   <Routes>
                                     <Route path="/" element={<HomePage />} />
                                     <Route path="/:dir" element={<LayoutPage />}>

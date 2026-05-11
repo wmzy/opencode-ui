@@ -2,55 +2,55 @@
   "name": "OpenCode",
   "short_name": "OpenCode",
   "description": "AI coding agent",
-  "start_url": "/",
+  "start_url": "/opencode-ui/",
   "display": "standalone",
   "orientation": "portrait",
   "theme_color": "#6366f1",
   "background_color": "#0a0a0a",
   "icons": [
     {
-      "src": "/icons/icon-72x72.svg",
+      "src": "/opencode-ui/icons/icon-72x72.svg",
       "sizes": "72x72",
       "type": "image/svg+xml"
     },
     {
-      "src": "/icons/icon-96x96.svg",
+      "src": "/opencode-ui/icons/icon-96x96.svg",
       "sizes": "96x96",
       "type": "image/svg+xml"
     },
     {
-      "src": "/icons/icon-128x128.svg",
+      "src": "/opencode-ui/icons/icon-128x128.svg",
       "sizes": "128x128",
       "type": "image/svg+xml"
     },
     {
-      "src": "/icons/icon-144x144.svg",
+      "src": "/opencode-ui/icons/icon-144x144.svg",
       "sizes": "144x144",
       "type": "image/svg+xml"
     },
     {
-      "src": "/icons/icon-152x152.svg",
+      "src": "/opencode-ui/icons/icon-152x152.svg",
       "sizes": "152x152",
       "type": "image/svg+xml"
     },
     {
-      "src": "/icons/icon-192x192.svg",
+      "src": "/opencode-ui/icons/icon-192x192.svg",
       "sizes": "192x192",
       "type": "image/svg+xml"
     },
     {
-      "src": "/icons/icon-384x384.svg",
+      "src": "/opencode-ui/icons/icon-384x384.svg",
       "sizes": "384x384",
       "type": "image/svg+xml"
     },
     {
-      "src": "/icons/icon-512x512.svg",
+      "src": "/opencode-ui/icons/icon-512x512.svg",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512x512.svg",
+      "src": "/opencode-ui/icons/icon-512x512.svg",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "maskable"
@@ -62,7 +62,7 @@
       "name": "New Chat",
       "short_name": "New",
       "description": "Start a new conversation",
-      "url": "/?action=new-chat"
+      "url": "/opencode-ui/?action=new-chat"
     }
   ]
 }
