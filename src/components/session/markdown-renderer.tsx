@@ -10,6 +10,8 @@ const markdownStyle = css`
   line-height: 1.7;
   color: var(--color-text);
   word-break: break-word;
+  max-width: 100%;
+  overflow-x: hidden;
 
   & > *:first-child {
     margin-top: 0;
@@ -76,6 +78,8 @@ const markdownStyle = css`
 
   & table {
     width: 100%;
+    max-width: 100%;
+    table-layout: fixed;
     border-collapse: collapse;
     margin: 8px 0;
     font-size: 13px;
@@ -85,6 +89,8 @@ const markdownStyle = css`
     padding: 6px 12px;
     border: 1px solid var(--color-border);
     text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   & th {

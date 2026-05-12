@@ -8,6 +8,7 @@ const wrapperStyle = css`
   overflow: hidden;
   margin: 8px 0;
   border: 1px solid var(--color-border);
+  max-width: 100%;
 `;
 
 const headerStyle = css`

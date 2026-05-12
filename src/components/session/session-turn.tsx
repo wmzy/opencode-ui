@@ -51,6 +51,8 @@ const _assistantAvatarStyle = css`
 
 const messageContentStyle = css`
   min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
   padding: 12px 16px;
   border-radius: 12px;
   font-size: 14px;

@@ -36,6 +36,7 @@ const sheetStyle = css`
   background: var(--color-bg-secondary);
   display: flex;
   flex-direction: row;
+  overflow: hidden;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   touch-action: pan-y;
 
@@ -52,6 +53,7 @@ const sheetRailStyle = css`
 const sheetContentStyle = css`
   flex: 1;
   min-width: 0;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
 `;
