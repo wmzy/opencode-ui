@@ -153,13 +153,9 @@ export function SettingsProviders() {
     try {
       setLoading(true);
       setError(null);
-      const [providerResult, authResult] = await Promise.all([
-        client.provider.list(),
-        client.provider.auth(),
-      ]);
+      const providerResult = await client.provider.list();
       setProviders(providerResult.all as Provider[]);
-      const authKeys = Object.keys(authResult);
-      setConnectedIds(authKeys);
+      setConnectedIds(providerResult.connected);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load providers');
     } finally {
@@ -256,7 +252,7 @@ export function SettingsProviders() {
                   {provider.source && <span className={providerTagStyle}>{getSourceLabel(provider.source, t)}</span>}
                 </div>
                 <Button variant="secondary" size="sm" onClick={() => setConnectDialog({ provider, open: true })}>
-                  {t('settings.connect_provider')}
+                  {t('settings.connect_provider', { name: provider.name })}
                 </Button>
               </div>
             ))
@@ -283,7 +279,7 @@ export function SettingsProviders() {
               {t('common.cancel')}
             </Button>
             <Button onClick={handleConnect} disabled={!apiKey.trim() || submitting}>
-              {submitting ? t('settings.connecting') : t('settings.connect_provider')}
+              {submitting ? t('settings.connecting') : t('settings.connect_provider', { name: connectDialog?.provider.name ?? '' })}
             </Button>
           </>
         )}
