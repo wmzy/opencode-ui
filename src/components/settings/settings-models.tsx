@@ -10,7 +10,7 @@ import type { Provider, Model } from '@/types/provider';
 
 const STORAGE_KEY = 'opencode-model-visibility';
 
-type Visibility = "show" | "hide";
+type Visibility = 'show' | 'hide';
 
 type ModelVisibility = {
   providerID: string;
@@ -337,39 +337,39 @@ export function SettingsModels() {
                 {filterProvider === 'all' && (
                   <div className={providerSectionStyle}>{providerNameMap[providerID] ?? providerID}</div>
                 )}
-              {models.map(model => {
-                const visible = isVisible(providerID, model.id);
-                return (
-                  <div key={model.id} className={cx(modelRowStyle, !visible && modelRowDisabledStyle)}>
-                    <div className={modelInfoStyle}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span className={cx(modelNameStyle, !visible && modelNameDisabledStyle)}>{model.name}</span>
-                        {model.status !== 'active' && (
-                          <span className={statusBadgeStyle} data-status={model.status}>{model.status}</span>
-                        )}
+                {models.map(model => {
+                  const visible = isVisible(providerID, model.id);
+                  return (
+                    <div key={model.id} className={cx(modelRowStyle, !visible && modelRowDisabledStyle)}>
+                      <div className={modelInfoStyle}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span className={cx(modelNameStyle, !visible && modelNameDisabledStyle)}>{model.name}</span>
+                          {model.status !== 'active' && (
+                            <span className={statusBadgeStyle} data-status={model.status}>{model.status}</span>
+                          )}
+                        </div>
+                        <div className={modelMetaStyle}>
+                          <span>{model.id}</span>
+                          <span>{t('settings.context')}: {(model.limit.context / 1000).toFixed(0)}K</span>
+                          {model.cost && (
+                            <>
+                              <span>{t('settings.in_price')}: ${model.cost.input}/MTok</span>
+                              <span>{t('settings.out_price')}: ${model.cost.output}/MTok</span>
+                            </>
+                          )}
+                        </div>
                       </div>
-                      <div className={modelMetaStyle}>
-                        <span>{model.id}</span>
-                        <span>{t('settings.context')}: {(model.limit.context / 1000).toFixed(0)}K</span>
-                        {model.cost && (
-                          <>
-                            <span>{t('settings.in_price')}: ${model.cost.input}/MTok</span>
-                            <span>{t('settings.out_price')}: ${model.cost.output}/MTok</span>
-                          </>
-                        )}
-                      </div>
+                      <Switch
+                        checked={visible}
+                        onCheckedChange={checked => handleToggle(providerID, model.id, checked)}
+                        size="sm"
+                      />
                     </div>
-                    <Switch
-                      checked={visible}
-                      onCheckedChange={checked => handleToggle(providerID, model.id, checked)}
-                      size="sm"
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          ))
-        )}
+                  );
+                })}
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

@@ -289,7 +289,10 @@ function ServerList({
           </div>
           <button
             className={deleteBtnStyle}
-            onClick={e => { e.stopPropagation(); onRemove(server.id); }}
+            onClick={e => {
+              e.stopPropagation();
+              onRemove(server.id);
+            }}
             aria-label="Remove server"
             title="Remove server"
           >

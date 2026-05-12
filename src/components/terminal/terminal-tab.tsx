@@ -642,7 +642,7 @@ export function TerminalTab({
     const t = termRef.current;
     if (!t) return;
     try {
-      t.setTheme(buildTerminalColors());
+      t.renderer?.setTheme(buildTerminalColors());
     } catch {
       // ignore
     }

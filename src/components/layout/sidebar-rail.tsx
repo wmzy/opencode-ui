@@ -697,7 +697,14 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
       )}
 
       {addProjectOpen && (
-        <div className={editOverlayStyle} onClick={() => { setAddProjectOpen(false); setAddProjectPath(''); setAddProjectSearch(''); }}>
+        <div
+          className={editOverlayStyle}
+          onClick={() => {
+            setAddProjectOpen(false);
+            setAddProjectPath('');
+            setAddProjectSearch('');
+          }}
+        >
           <div className={editDialogStyle} onClick={(e) => e.stopPropagation()}>
             <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text)' }}>
               {t('project.open')}
@@ -707,7 +714,11 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
                 value={addProjectSearch}
                 onChange={(e) => setAddProjectSearch(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Escape') { setAddProjectOpen(false); setAddProjectPath(''); setAddProjectSearch(''); }
+                  if (e.key === 'Escape') {
+                    setAddProjectOpen(false);
+                    setAddProjectPath('');
+                    setAddProjectSearch('');
+                  }
                 }}
                 placeholder={t('sidebar.search_projects')}
                 autoFocus
@@ -733,8 +744,7 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
                       <span className={projectSearchPath}>{project.worktree.replace(/^\/home\/[^/]+/, '~')}</span>
                     </div>
                   </button>
-                ))
-              }
+                ))}
               {addProjectFiltered.length === 0 && (
                 <div className={noResultsStyle}>{t('sidebar.no_results')}</div>
               )}
@@ -746,13 +756,24 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
                 onChange={(e) => setAddProjectPath(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleAddProject();
-                  if (e.key === 'Escape') { setAddProjectOpen(false); setAddProjectPath(''); setAddProjectSearch(''); }
+                  if (e.key === 'Escape') {
+                    setAddProjectOpen(false);
+                    setAddProjectPath('');
+                    setAddProjectSearch('');
+                  }
                 }}
                 placeholder="/path/to/project"
               />
             </div>
             <div className={editActionsStyle}>
-              <button className={editBtnStyle} onClick={() => { setAddProjectOpen(false); setAddProjectPath(''); setAddProjectSearch(''); }}>
+              <button
+                className={editBtnStyle}
+                onClick={() => {
+                  setAddProjectOpen(false);
+                  setAddProjectPath('');
+                  setAddProjectSearch('');
+                }}
+              >
                 {t('common.cancel')}
               </button>
               <button className={editBtnPrimaryStyle} onClick={handleAddProject} disabled={!addProjectPath.trim()}>
