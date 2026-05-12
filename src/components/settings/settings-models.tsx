@@ -1,10 +1,12 @@
-import { css } from '@linaria/core';
+import { css, cx } from '@linaria/core';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Select } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
+import { Switch } from '@/components/ui/switch';
 import { useSdk } from '@/context/sdk';
 import type { Provider, Model } from '@/types/provider';
+import type { ProviderConfig } from '@/types/config';
 
 const containerStyle = css`
   display: flex;
@@ -97,6 +99,14 @@ const statusBadgeStyle = css`
   }
 `;
 
+const modelRowDisabledStyle = css`
+  opacity: 0.5;
+`;
+
+const modelNameDisabledStyle = css`
+  text-decoration: line-through;
+`;
+
 const loadingStyle = css`
   display: flex;
   align-items: center;
@@ -154,13 +164,28 @@ export function SettingsModels() {
   const [error, setError] = useState<string | null>(null);
   const [filterProvider, setFilterProvider] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [disabledModels, setDisabledModels] = useState<Record<string, string[]>>({});
 
   const fetchProviders = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const result = await client.config.providers();
-      setProviders(result.providers as Provider[]);
+      const [providersResult, configResult] = await Promise.all([
+        client.config.providers(),
+        client.config.get(),
+      ]);
+      setProviders(providersResult.providers as Provider[]);
+
+      const config = configResult as { provider?: Record<string, ProviderConfig> };
+      const blacklists: Record<string, string[]> = {};
+      if (config.provider) {
+        for (const [providerID, providerConfig] of Object.entries(config.provider)) {
+          if (providerConfig?.blacklist && providerConfig.blacklist.length > 0) {
+            blacklists[providerID] = providerConfig.blacklist;
+          }
+        }
+      }
+      setDisabledModels(blacklists);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load models');
     } finally {
@@ -217,6 +242,38 @@ export function SettingsModels() {
     return map;
   }, [providers]);
 
+  const handleToggleModel = useCallback(
+    async (providerID: string, modelID: string, enable: boolean) => {
+      const prevBlacklist = disabledModels[providerID] ?? [];
+      const nextBlacklist = enable
+        ? prevBlacklist.filter((id) => id !== modelID)
+        : [...prevBlacklist, modelID];
+
+      // Optimistic update
+      setDisabledModels((prev) => ({
+        ...prev,
+        [providerID]: nextBlacklist,
+      }));
+
+      try {
+        await client.config.update({
+          body: {
+            provider: {
+              [providerID]: { blacklist: nextBlacklist },
+            },
+          },
+        });
+      } catch {
+        // Rollback on failure
+        setDisabledModels((prev) => ({
+          ...prev,
+          [providerID]: prevBlacklist,
+        }));
+      }
+    },
+    [client, disabledModels],
+  );
+
   if (loading) {
     return (
       <div className={containerStyle}>
@@ -263,29 +320,39 @@ export function SettingsModels() {
                 {filterProvider === 'all' && (
                   <div className={providerSectionStyle}>{providerNameMap[providerID] ?? providerID}</div>
                 )}
-                {models.map(model => (
-                  <div key={model.id} className={modelRowStyle}>
-                    <div className={modelInfoStyle}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span className={modelNameStyle}>{model.name}</span>
-                        {filterProvider !== 'all' && (
-                          <span className={providerBadgeStyle}>{model.providerName}</span>
-                        )}
-                        <span className={statusBadgeStyle} data-status={model.status}>{model.status}</span>
-                      </div>
-                      <div className={modelMetaStyle}>
-                        <span>{model.id}</span>
-                        <span>Context: {(model.limit.context / 1000).toFixed(0)}K</span>
-                        {model.cost && (
-                          <>
-                            <span>In: ${model.cost.input}/MTok</span>
-                            <span>Out: ${model.cost.output}/MTok</span>
-                          </>
-                        )}
+                {models.map(model => {
+                  const isDisabled = (disabledModels[providerID] || []).includes(model.id);
+                  return (
+                    <div key={model.id} className={cx(modelRowStyle, isDisabled && modelRowDisabledStyle)}>
+                      <div className={modelInfoStyle}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span className={cx(modelNameStyle, isDisabled && modelNameDisabledStyle)}>{model.name}</span>
+                          {filterProvider !== 'all' && (
+                            <span className={providerBadgeStyle}>{model.providerName}</span>
+                          )}
+                          {model.status !== 'active' && (
+                            <span className={statusBadgeStyle} data-status={model.status}>{model.status}</span>
+                          )}
+                          <Switch
+                            checked={!isDisabled}
+                            onCheckedChange={checked => handleToggleModel(providerID, model.id, checked)}
+                            size="sm"
+                          />
+                        </div>
+                        <div className={modelMetaStyle}>
+                          <span>{model.id}</span>
+                          <span>Context: {(model.limit.context / 1000).toFixed(0)}K</span>
+                          {model.cost && (
+                            <>
+                              <span>In: ${model.cost.input}/MTok</span>
+                              <span>Out: ${model.cost.output}/MTok</span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ))
           )}

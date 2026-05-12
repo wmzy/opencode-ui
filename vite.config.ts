@@ -61,6 +61,10 @@ export default defineConfig({
     port: parseInt(process.env.PORT || '3000'),
     host: true,
     proxy: {
+      '/agent': {
+        target: 'http://localhost:4099',
+        changeOrigin: true,
+      },
       '/global': {
         target: 'http://localhost:4099',
         changeOrigin: true,

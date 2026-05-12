@@ -528,7 +528,31 @@ export function resolveTheme(theme: DesktopTheme): { light: ResolvedTheme; dark:
 }
 
 export function themeToCss(tokens: ResolvedTheme): string {
-  return Object.entries(tokens)
+  const aliasMap: Record<string, string> = {
+    '--color-bg': tokens['background-base'] ?? tokens['surface-base'],
+    '--color-bg-secondary': tokens['surface-raised-base'] ?? tokens['surface-base'],
+    '--color-bg-tertiary': tokens['surface-base-hover'] ?? tokens['surface-base'],
+    '--color-text': tokens['text-strong'] ?? tokens['text-base'],
+    '--color-text-secondary': tokens['text-base'] ?? tokens['text-weak'],
+    '--color-text-tertiary': tokens['text-weak'] ?? tokens['text-weaker'],
+    '--color-border': tokens['border-base'] ?? tokens['border-weak-base'],
+    '--color-border-focus': tokens['border-focus'] ?? tokens['border-active'],
+    '--color-accent': tokens['border-interactive-base'] ?? tokens['surface-interactive-base'],
+    '--color-accent-hover': tokens['border-interactive-hover'] ?? tokens['surface-interactive-hover'],
+    '--color-success': tokens['icon-success-base'],
+    '--color-warning': tokens['icon-warning-base'],
+    '--color-error': tokens['icon-critical-base'],
+    '--color-info': tokens['icon-info-base'],
+  };
+
+  const base = Object.entries(tokens)
     .map(([key, value]) => `--${key}: ${value};`)
     .join('\n  ');
+
+  const aliases = Object.entries(aliasMap)
+    .filter(([, v]) => v !== undefined)
+    .map(([key, value]) => `${key}: ${value};`)
+    .join('\n  ');
+
+  return `${base}\n  ${aliases}`;
 }

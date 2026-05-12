@@ -115,10 +115,11 @@ function getProjectDisplayName(project: Project): string {
 
 export type SidebarPanelProps = {
   project?: Project | null;
+  directory?: string;
   projectSdk: OpenCodeSdk;
 };
 
-export function SidebarPanel({ project, projectSdk }: SidebarPanelProps) {
+export function SidebarPanel({ project, directory, projectSdk }: SidebarPanelProps) {
   const { toggleSidebar } = useLayout();
   const { t } = useI18n();
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -154,7 +155,9 @@ export function SidebarPanel({ project, projectSdk }: SidebarPanelProps) {
 
   const displayName = project
     ? getProjectDisplayName(project)
-    : 'OpenCode';
+    : directory
+      ? directory.replace(/\/+$/, '').split('/').pop() ?? directory
+      : '';
 
   const handleNewSession = useCallback(async () => {
     if (creating) return;
@@ -169,6 +172,21 @@ export function SidebarPanel({ project, projectSdk }: SidebarPanelProps) {
       setCreating(false);
     }
   }, [projectSdk, creating]);
+
+  const handleDeleteSession = useCallback(async (id: string) => {
+    await projectSdk.session.delete(id);
+    setSessions(prev => prev.filter(s => s.id !== id));
+  }, [projectSdk]);
+
+  const handleRenameSession = useCallback(async (id: string, title: string) => {
+    await projectSdk.session.update(id, { body: { title } });
+    setSessions(prev => prev.map(s => s.id === id ? { ...s, title } : s));
+  }, [projectSdk]);
+
+  const handleArchiveSession = useCallback(async (id: string) => {
+    await projectSdk.session.update(id, { body: { time: { archived: Date.now() } } });
+    setSessions(prev => prev.filter(s => s.id !== id));
+  }, [projectSdk]);
 
   return (
     <div className={panelStyle}>
@@ -211,6 +229,9 @@ export function SidebarPanel({ project, projectSdk }: SidebarPanelProps) {
           <SidebarSessionList
             sessions={filtered}
             loading={loading}
+            onDelete={handleDeleteSession}
+            onRename={handleRenameSession}
+            onArchive={handleArchiveSession}
           />
         </ScrollArea>
       </div>

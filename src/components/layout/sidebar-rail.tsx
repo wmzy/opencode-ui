@@ -272,6 +272,83 @@ const editBtnPrimaryStyle = css`
   &:hover {
     opacity: 0.9;
   }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+`;
+
+const projectSearchListStyle = css`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 200px;
+  overflow-y: auto;
+`;
+
+const projectSearchItemStyle = css`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.1s;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+
+  &:hover {
+    background: var(--color-bg-tertiary);
+  }
+`;
+
+const projectSearchAvatar = css`
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+`;
+
+const projectSearchInfo = css`
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+`;
+
+const projectSearchName = css`
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const projectSearchPath = css`
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const noResultsStyle = css`
+  padding: 12px;
+  font-size: 13px;
+  color: var(--color-text-tertiary);
+  text-align: center;
 `;
 
 const avatarColors = [
@@ -316,13 +393,24 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [editName, setEditName] = useState('');
   const [workspaceEnabled, setWorkspaceEnabled] = useState<Record<string, boolean>>({});
+  const [addProjectOpen, setAddProjectOpen] = useState(false);
+  const [addProjectPath, setAddProjectPath] = useState('');
+  const [addProjectSearch, setAddProjectSearch] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
     client.project.list()
       .then((data) => {
-        if (!cancelled) setProjects(data as Project[]);
+        if (cancelled) return;
+        const raw = data as Project[];
+        let closed: string[] = [];
+        try {
+          closed = JSON.parse(localStorage.getItem('opencode-closed-projects') ?? '[]');
+        } catch {
+          // ignore
+        }
+        setProjects(raw.filter(p => !closed.includes(p.worktree)));
       })
       .catch(() => {
         if (!cancelled) setProjects([]);
@@ -376,7 +464,7 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
   useEffect(() => {
     if (!contextMenu) return;
     const close = (e: MouseEvent) => {
-      if (!menuRef.current?.contains(e.target as Node)) return;
+      if (menuRef.current?.contains(e.target as Node)) return;
       setContextMenu(null);
     };
     const closeKey = (e: KeyboardEvent) => {
@@ -423,6 +511,33 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
     setContextMenu(null);
   }, [contextMenu, notification.project]);
 
+  const addProjectFiltered = useMemo(() => {
+    if (!addProjectSearch.trim()) return projects;
+    const q = addProjectSearch.toLowerCase();
+    return projects.filter(p => {
+      const name = getProjectDisplayName(p).toLowerCase();
+      const path = p.worktree.toLowerCase();
+      return name.includes(q) || path.includes(q);
+    });
+  }, [projects, addProjectSearch]);
+
+  const handleAddProject = useCallback(() => {
+    const path = addProjectPath.trim();
+    if (!path) return;
+    const encoded = btoa(path);
+    const sdk = getSdk(path);
+    setAddProjectOpen(false);
+    setAddProjectPath('');
+    sdk.session.list({ roots: true, limit: 1 })
+      .then((sessions) => {
+        const firstId = (sessions as Array<{ id: string }>)[0]?.id;
+        navigate(firstId ? `/${encoded}/session/${firstId}` : `/${encoded}/session`);
+      })
+      .catch(() => {
+        navigate(`/${encoded}/session`);
+      });
+  }, [addProjectPath, getSdk, navigate]);
+
   const handleCloseProject = useCallback(() => {
     if (!contextMenu) return;
     const closedWorktree = contextMenu.project.worktree;
@@ -430,6 +545,15 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
     const isCurrent = currentPath === closedWorktree;
     setContextMenu(null);
     setProjects(prev => prev.filter(p => p.worktree !== closedWorktree));
+    try {
+      const closed: string[] = JSON.parse(localStorage.getItem('opencode-closed-projects') ?? '[]');
+      if (!closed.includes(closedWorktree)) {
+        closed.push(closedWorktree);
+        localStorage.setItem('opencode-closed-projects', JSON.stringify(closed));
+      }
+    } catch {
+      // ignore
+    }
     if (isCurrent) {
       const remaining = projects.filter(p => p.worktree !== closedWorktree);
       if (remaining.length > 0) {
@@ -454,6 +578,15 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
     <>
       <div className={railStyle}>
         <div className={railItems}>
+          <Tooltip content="Open project" position="right">
+            <button
+              className={iconButton}
+              onClick={() => setAddProjectOpen(true)}
+              aria-label="Open project"
+            >
+              +
+            </button>
+          </Tooltip>
           {projects.map((project) => {
             const isActive = project.id === activeProjectId;
             const displayName = getProjectDisplayName(project);
@@ -555,6 +688,73 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
               </button>
               <button className={editBtnPrimaryStyle} onClick={handleEditSave}>
                 保存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {addProjectOpen && (
+        <div className={editOverlayStyle} onClick={() => { setAddProjectOpen(false); setAddProjectPath(''); setAddProjectSearch(''); }}>
+          <div className={editDialogStyle} onClick={(e) => e.stopPropagation()}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text)' }}>
+              打开项目
+            </div>
+            <div className={editFieldStyle}>
+              <input
+                value={addProjectSearch}
+                onChange={(e) => setAddProjectSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') { setAddProjectOpen(false); setAddProjectPath(''); setAddProjectSearch(''); }
+                }}
+                placeholder="搜索项目..."
+                autoFocus
+              />
+            </div>
+            <div className={projectSearchListStyle}>
+              {addProjectFiltered
+                .map(project => (
+                  <button
+                    key={project.id}
+                    className={projectSearchItemStyle}
+                    onClick={() => {
+                      setAddProjectOpen(false);
+                      setAddProjectSearch('');
+                      handleProjectClick(project);
+                    }}
+                  >
+                    <span className={projectSearchAvatar} style={{ background: project.icon?.color ?? getProjectColor(getProjectDisplayName(project)) }}>
+                      {project.icon?.override ?? getProjectDisplayName(project).charAt(0)?.toUpperCase() ?? '?'}
+                    </span>
+                    <div className={projectSearchInfo}>
+                      <span className={projectSearchName}>{getProjectDisplayName(project)}</span>
+                      <span className={projectSearchPath}>{project.worktree.replace(/^\/home\/[^/]+/, '~')}</span>
+                    </div>
+                  </button>
+                ))
+              }
+              {addProjectFiltered.length === 0 && (
+                <div className={noResultsStyle}>无匹配项目</div>
+              )}
+            </div>
+            <div className={editFieldStyle}>
+              <label>自定义路径</label>
+              <input
+                value={addProjectPath}
+                onChange={(e) => setAddProjectPath(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleAddProject();
+                  if (e.key === 'Escape') { setAddProjectOpen(false); setAddProjectPath(''); setAddProjectSearch(''); }
+                }}
+                placeholder="/path/to/project"
+              />
+            </div>
+            <div className={editActionsStyle}>
+              <button className={editBtnStyle} onClick={() => { setAddProjectOpen(false); setAddProjectPath(''); setAddProjectSearch(''); }}>
+                取消
+              </button>
+              <button className={editBtnPrimaryStyle} onClick={handleAddProject} disabled={!addProjectPath.trim()}>
+                打开
               </button>
             </div>
           </div>

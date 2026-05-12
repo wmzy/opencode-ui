@@ -1,14 +1,14 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { cx } from '@linaria/core';
-import { lightTheme, spacing, typography } from 'haze-ui';
+import { spacing, typography } from 'haze-ui';
 import { App } from './App';
 import { globalStyles } from './styles/global';
 import 'haze-ui/styles.css';
 
 function Root() {
   return (
-    <div className={cx(globalStyles, lightTheme, spacing, typography)}>
+    <div className={cx(globalStyles, spacing, typography)}>
       <App />
     </div>
   );

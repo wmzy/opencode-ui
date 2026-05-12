@@ -2,7 +2,6 @@ import { css, cx } from '@linaria/core';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLayout } from '@/context/layout';
-import { useSync } from '@/context/sync';
 import type { Session } from '@/types';
 
 const itemStyle = css`
@@ -174,9 +173,9 @@ export type SidebarSessionItemProps = {
   session: Session;
   active?: boolean;
   onSelect?: (session: Session) => void;
-  onRename?: (id: string, title: string) => void;
-  onDelete?: (id: string) => void;
-  onArchive?: (id: string) => void;
+  onRename?: (id: string, title: string) => Promise<void>;
+  onDelete?: (id: string) => Promise<void>;
+  onArchive?: (id: string) => Promise<void>;
   unread?: boolean;
 };
 
@@ -190,7 +189,6 @@ export function SidebarSessionItem({
   unread = false,
 }: SidebarSessionItemProps) {
   const { setActiveSession } = useLayout();
-  const { deleteSession, updateSession, archiveSession } = useSync();
   const navigate = useNavigate();
   const { dir } = useParams<{ dir: string }>();
   const [editing, setEditing] = useState(false);
@@ -224,13 +222,12 @@ export function SidebarSessionItem({
     setEditing(false);
     if (trimmed && trimmed !== session.title) {
       try {
-        await updateSession(session.id, { title: trimmed });
-        onRename?.(session.id, trimmed);
+        await onRename?.(session.id, trimmed);
       } catch {
         setEditValue(session.title);
       }
     }
-  }, [editValue, session.id, session.title, updateSession, onRename]);
+  }, [editValue, session.id, session.title, onRename]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -250,15 +247,13 @@ export function SidebarSessionItem({
 
   const handleDelete = useCallback(async () => {
     closeMenu();
-    await deleteSession(session.id);
-    onDelete?.(session.id);
-  }, [closeMenu, deleteSession, session.id, onDelete]);
+    await onDelete?.(session.id);
+  }, [closeMenu, onDelete, session.id]);
 
   const handleArchive = useCallback(async () => {
     closeMenu();
-    await archiveSession(session.id);
-    onArchive?.(session.id);
-  }, [closeMenu, archiveSession, session.id, onArchive]);
+    await onArchive?.(session.id);
+  }, [closeMenu, onArchive, session.id]);
 
   const handleStartRename = useCallback(() => {
     closeMenu();

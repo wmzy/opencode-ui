@@ -47,17 +47,6 @@ export const globalStyles = css`
       --safe-area-bottom: env(safe-area-inset-bottom, 0px);
     }
 
-    [data-theme='light'] {
-      --color-bg: #ffffff;
-      --color-bg-secondary: #f5f5f5;
-      --color-bg-tertiary: #e5e5e5;
-      --color-text: #171717;
-      --color-text-secondary: #525252;
-      --color-text-tertiary: #a3a3a3;
-      --color-border: #e5e5e5;
-      --color-border-focus: #d4d4d4;
-    }
-
     a {
       color: var(--color-accent);
       text-decoration: none;

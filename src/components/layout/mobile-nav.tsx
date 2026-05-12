@@ -253,7 +253,7 @@ export type MobileNavProps = {
   projectSdk: OpenCodeSdk;
 };
 
-export function MobileNav({ open, onClose, onSettings, project, projects, projectSdk }: MobileNavProps) {
+export function MobileNav({ open, onClose, onSettings, project, projects, currentPath, projectSdk }: MobileNavProps) {
   const { client } = useSdk();
   const navigate = useNavigate();
   const notification = useNotification();
@@ -299,6 +299,21 @@ export function MobileNav({ open, onClose, onSettings, project, projects, projec
       setCreating(false);
     }
   }, [projectSdk, creating]);
+
+  const handleDeleteSession = useCallback(async (id: string) => {
+    await projectSdk.session.delete(id);
+    setSessions(prev => prev.filter(s => s.id !== id));
+  }, [projectSdk]);
+
+  const handleRenameSession = useCallback(async (id: string, title: string) => {
+    await projectSdk.session.update(id, { body: { title } });
+    setSessions(prev => prev.map(s => s.id === id ? { ...s, title } : s));
+  }, [projectSdk]);
+
+  const handleArchiveSession = useCallback(async (id: string) => {
+    await projectSdk.session.update(id, { body: { time: { archived: Date.now() } } });
+    setSessions(prev => prev.filter(s => s.id !== id));
+  }, [projectSdk]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     touchStartRef.current = e.touches[0].clientX;
@@ -365,8 +380,10 @@ export function MobileNav({ open, onClose, onSettings, project, projects, projec
   }, [project, notification.project]);
 
   const displayName = project
-    ? (project.name ?? project.worktree.replace(/\/+$/, '').split('/').pop() ?? 'OpenCode')
-    : 'OpenCode';
+    ? (project.name ?? project.worktree.replace(/\/+$/, '').split('/').pop() ?? currentPath.replace(/\/+$/, '').split('/').pop() ?? '')
+    : currentPath
+      ? currentPath.replace(/\/+$/, '').split('/').pop() ?? ''
+      : '';
 
   return (
     <>
@@ -412,6 +429,9 @@ export function MobileNav({ open, onClose, onSettings, project, projects, projec
                 sessions={sessions}
                 loading={loading}
                 onSelect={handleSelect}
+                onDelete={handleDeleteSession}
+                onRename={handleRenameSession}
+                onArchive={handleArchiveSession}
               />
             </ScrollArea>
           </div>

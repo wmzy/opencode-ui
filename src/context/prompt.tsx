@@ -1,6 +1,8 @@
-import { createContext, useContext, useState, useCallback, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useRef, useEffect, type ReactNode } from 'react';
 import type { OpenCodeSdk } from '@/lib/sdk';
 import type { PartInput } from '@/types/part';
+
+const PERSIST_KEY = 'opencode-prompt';
 
 type PromptPart = PartInput;
 
@@ -50,17 +52,45 @@ function textFromParts(parts: PromptPart[]): string {
     .join('');
 }
 
+function loadPersisted(): Pick<PromptState, 'agent' | 'model'> {
+  try {
+    const raw = localStorage.getItem(PERSIST_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return { agent: parsed.agent, model: parsed.model };
+    }
+  } catch {
+    // ignore
+  }
+  return { agent: undefined, model: undefined };
+}
+
+function persist(fields: Pick<PromptState, 'agent' | 'model'>) {
+  try {
+    localStorage.setItem(PERSIST_KEY, JSON.stringify(fields));
+  } catch {
+    // ignore
+  }
+}
+
 export function PromptProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<PromptState>({
-    parts: [],
-    model: undefined,
-    agent: undefined,
-    reasoningEffort: undefined,
-    streaming: false,
-    followups: [],
+  const [state, setState] = useState<PromptState>(() => {
+    const saved = loadPersisted();
+    return {
+      parts: [],
+      model: saved.model,
+      agent: saved.agent,
+      reasoningEffort: undefined,
+      streaming: false,
+      followups: [],
+    };
   });
 
   const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    persist({ agent: state.agent, model: state.model });
+  }, [state.agent, state.model]);
 
   const setText = useCallback((text: string) => {
     setState((prev) => {

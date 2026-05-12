@@ -97,9 +97,9 @@ export function LayoutPage() {
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
 
   const projectSdk = useMemo(() => {
-    if (!currentProject) return client;
-    return getSdk(currentProject.worktree);
-  }, [client, getSdk, currentProject]);
+    if (currentPath) return getSdk(currentPath);
+    return client;
+  }, [client, getSdk, currentPath]);
 
   useEffect(() => {
     const unregisters: (() => void)[] = [];
@@ -206,7 +206,7 @@ export function LayoutPage() {
         <div className={cx(sidebarWrapper, layout.sidebarOpen ? 'expanded' : 'collapsed')}>
           <div className={sidebarContent}>
             <SidebarRail onSettings={openSettings} />
-            {layout.sidebarOpen && <SidebarPanel project={currentProject} projectSdk={projectSdk} />}
+            {layout.sidebarOpen && <SidebarPanel project={currentProject} directory={currentPath} projectSdk={projectSdk} />}
           </div>
         </div>
 

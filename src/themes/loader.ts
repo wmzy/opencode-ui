@@ -75,12 +75,16 @@ export function applyThemeForMode(theme: DesktopTheme, themeId: string, mode: 'l
   ensureStyleElement().textContent = fullCss;
   document.documentElement.dataset.theme = themeId;
   document.documentElement.dataset.colorScheme = mode;
+
+  document.documentElement.classList.toggle('haze-colors__lightTheme', !isDark);
+  document.documentElement.classList.toggle('haze-colors__darkTheme', isDark);
 }
 
 export function removeTheme(): void {
   const existing = document.getElementById(THEME_STYLE_ID);
   if (existing) existing.remove();
   document.documentElement.removeAttribute('data-theme');
+  document.documentElement.classList.remove('haze-colors__lightTheme', 'haze-colors__darkTheme');
 }
 
 const themeModules = import.meta.glob<{ default: DesktopTheme }>('./json/*.json');

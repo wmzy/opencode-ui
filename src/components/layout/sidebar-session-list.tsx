@@ -52,9 +52,9 @@ export type SidebarSessionListProps = {
   sessions: Session[];
   loading?: boolean;
   onSelect?: (session: Session) => void;
-  onRename?: (id: string, title: string) => void;
-  onDelete?: (id: string) => void;
-  onArchive?: (id: string) => void;
+  onRename?: (id: string, title: string) => Promise<void>;
+  onDelete?: (id: string) => Promise<void>;
+  onArchive?: (id: string) => Promise<void>;
 };
 
 export function SidebarSessionList({
