@@ -1,5 +1,6 @@
 import { Dialog } from './dialog';
 import { Button } from '@/components/ui/button';
+import { useI18n } from '@/context/language';
 
 export type ForkSessionDialogProps = {
   open: boolean;
@@ -9,14 +10,15 @@ export type ForkSessionDialogProps = {
 };
 
 export function ForkSessionDialog({ open, onClose, onFork, sessionName }: ForkSessionDialogProps) {
+  const { t } = useI18n();
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      title="Fork Session"
+      title={t('session.fork_session')}
       footer={(
         <div style={{ display: 'flex', gap: 8 }}>
-          <Button variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button variant="secondary" onClick={onClose}>{t('common.cancel')}</Button>
           <Button
             variant="primary"
             onClick={() => {
@@ -24,7 +26,7 @@ export function ForkSessionDialog({ open, onClose, onFork, sessionName }: ForkSe
               onClose();
             }}
           >
-            Fork
+            {t('session.fork')}
           </Button>
         </div>
       )}

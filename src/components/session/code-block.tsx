@@ -1,5 +1,6 @@
 import { css, cx } from '@linaria/core';
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useI18n } from '@/context/language';
 
 const wrapperStyle = css`
   position: relative;
@@ -131,6 +132,7 @@ export function CodeBlock({
   showLineNumbers = false,
   className,
 }: CodeBlockProps) {
+  const { t } = useI18n();
   const [copied, setCopied] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -157,7 +159,7 @@ export function CodeBlock({
       <div className={headerStyle}>
         <span className={langLabelStyle}>{language ?? 'text'}</span>
         <button className={cx(copyBtnStyle, copied && copiedStyle)} onClick={handleCopy}>
-          {copied ? 'Copied!' : 'Copy'}
+          {copied ? t('message.copied') : t('message.copy')}
         </button>
       </div>
       <div
@@ -179,7 +181,7 @@ export function CodeBlock({
       </div>
       {isLong && (
         <button className={expandBtnStyle} onClick={() => setExpanded((e) => !e)}>
-          {expanded ? 'Collapse' : `Show all ${lines.length} lines`}
+          {expanded ? t('session.collapse') : t('session.show_all_lines', { count: lines.length })}
         </button>
       )}
     </div>

@@ -3,6 +3,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSdk } from '@/context/sdk';
 import { useNotification } from '@/context/notification';
+import { useI18n } from '@/context/language';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SidebarSessionList } from './sidebar-session-list';
@@ -254,6 +255,7 @@ export type MobileNavProps = {
 };
 
 export function MobileNav({ open, onClose, onSettings, project, projects, currentPath, projectSdk }: MobileNavProps) {
+  const { t } = useI18n();
   const { client } = useSdk();
   const navigate = useNavigate();
   const notification = useNotification();
@@ -406,7 +408,7 @@ export function MobileNav({ open, onClose, onSettings, project, projects, curren
 
           <div className={sheetHeader}>
             <span className={sheetTitle}>{displayName}</span>
-            <button className={closeBtn} onClick={onClose} aria-label="Close">
+            <button className={closeBtn} onClick={onClose} aria-label={t('sidebar.close')}>
               ✕
             </button>
           </div>
@@ -419,7 +421,7 @@ export function MobileNav({ open, onClose, onSettings, project, projects, curren
               loading={creating}
               onClick={handleNewSession}
             >
-              + New Session
+              + {t('sidebar.new_session')}
             </Button>
           </div>
 
@@ -442,24 +444,24 @@ export function MobileNav({ open, onClose, onSettings, project, projects, curren
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M11.5 1.5l3 3L5 14H2v-3z" />
                 </svg>
-                编辑
+                {t('project.edit')}
               </button>
               <button
                 className={actionBtnStyle}
                 onClick={handleToggleWorkspace}
                 disabled={project.vcs !== 'git' && !workspaceEnabled[project.worktree]}
               >
-                {workspaceEnabled[project.worktree] ? '禁用工作区' : '启用工作区'}
+                {workspaceEnabled[project.worktree] ? t('workspace.disable') : t('workspace.enable')}
               </button>
               <button
                 className={actionBtnStyle}
                 onClick={handleClearNotifications}
                 disabled={!project || notification.project.unseenCount(project.worktree) === 0}
               >
-                清除通知
+                {t('notification.clear')}
               </button>
               <button className={cx(actionBtnStyle, actionBtnDangerStyle)} onClick={handleCloseProject}>
-                关闭
+                {t('project.close')}
               </button>
             </div>
           )}
@@ -470,10 +472,10 @@ export function MobileNav({ open, onClose, onSettings, project, projects, curren
         <div className={editOverlayStyle} onClick={() => setEditOpen(false)}>
           <div className={editDialogStyle} onClick={(e) => e.stopPropagation()}>
             <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text)' }}>
-              编辑项目
+              {t('project.edit')}
             </div>
             <div className={editFieldStyle}>
-              <label>名称</label>
+              <label>{t('project.name')}</label>
               <input
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
@@ -486,10 +488,10 @@ export function MobileNav({ open, onClose, onSettings, project, projects, curren
             </div>
             <div className={editActionsStyle}>
               <button className={editBtnStyle} onClick={() => setEditOpen(false)}>
-                取消
+                {t('common.cancel')}
               </button>
               <button className={editBtnPrimaryStyle} onClick={handleEditSave}>
-                保存
+                {t('common.save')}
               </button>
             </div>
           </div>

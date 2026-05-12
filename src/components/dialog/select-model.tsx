@@ -2,6 +2,7 @@ import { css } from '@linaria/core';
 import { useState } from 'react';
 import { Dialog } from './dialog';
 import { Input } from '@/components/ui/input';
+import { useI18n } from '@/context/language';
 
 type ModelOption = {
   id: string;
@@ -68,6 +69,7 @@ export type SelectModelDialogProps = {
 };
 
 export function SelectModelDialog({ open, onClose, onSelect, currentModel }: SelectModelDialogProps) {
+  const { t } = useI18n();
   const [query, setQuery] = useState('');
 
   const filtered = query.trim()
@@ -78,10 +80,10 @@ export function SelectModelDialog({ open, onClose, onSelect, currentModel }: Sel
     : MODELS;
 
   return (
-    <Dialog open={open} onClose={onClose} title="Select Model">
+    <Dialog open={open} onClose={onClose} title={t('session.select_model')}>
       <div style={{ marginBottom: 12 }}>
         <Input
-          placeholder="Search models..."
+          placeholder={t('session.search_models')}
           value={query}
           onChange={e => setQuery(e.currentTarget.value)}
           size="md"

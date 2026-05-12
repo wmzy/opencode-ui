@@ -3,6 +3,7 @@ import { useMemo, useState, useCallback } from 'react';
 import type { FileDiff } from '@/types/common';
 import { DiffChanges } from './diff-changes';
 import { DiffViewer } from '@/components/file/diff-viewer';
+import { useI18n } from '@/context/language';
 
 export type DiffAccordionProps = {
   diffs: Array<FileDiff>;
@@ -365,6 +366,7 @@ function DiffItem({ diff }: { diff: FileDiff }) {
 }
 
 export function DiffAccordion({ diffs, maxVisible = 10, className }: DiffAccordionProps) {
+  const { t } = useI18n();
   const [showAll, setShowAll] = useState(false);
 
   const visibleDiffs = useMemo(() => {
@@ -380,7 +382,7 @@ export function DiffAccordion({ diffs, maxVisible = 10, className }: DiffAccordi
     <div data-component="diff-accordion" className={cx(containerStyle, className)}>
       <div className={headerStyle}>
         <span className={headerLabelStyle}>
-          {diffs.length} {diffs.length === 1 ? 'file' : 'files'} changed
+          {diffs.length} {diffs.length === 1 ? t('session.file_changed_single') : t('session.file_changed_multi')}
         </span>
         <DiffChanges changes={diffs} />
         {overflow > 0 && (
@@ -388,7 +390,7 @@ export function DiffAccordion({ diffs, maxVisible = 10, className }: DiffAccordi
             className={headerToggleStyle}
             onClick={() => setShowAll((prev) => !prev)}
           >
-            {showAll ? 'Show less' : `Show all ${overflow} more`}
+            {showAll ? t('session.show_less') : t('session.show_all_more', { count: overflow })}
           </button>
         )}
       </div>
@@ -397,7 +399,7 @@ export function DiffAccordion({ diffs, maxVisible = 10, className }: DiffAccordi
       ))}
       {!showAll && overflow > 0 && (
         <button className={moreButtonStyle} onClick={() => setShowAll(true)}>
-          {overflow} more {overflow === 1 ? 'file' : 'files'}
+          {overflow} {overflow === 1 ? t('session.more_file_single') : t('session.more_file_multi')}
         </button>
       )}
     </div>

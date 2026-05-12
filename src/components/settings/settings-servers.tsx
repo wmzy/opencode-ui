@@ -1,6 +1,7 @@
 import { css } from '@linaria/core';
 import { useState } from 'react';
 import { useServer, type ServerConfig } from '@/context/server';
+import { useI18n } from '@/context/language';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Collapsible } from '@/components/ui/collapsible';
@@ -175,6 +176,7 @@ function ServerAccordion({
   onConnect: () => void;
   onRemove: () => void;
 }) {
+  const { t } = useI18n();
   const { updateServer } = useServer();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<FormData>(emptyForm);
@@ -225,7 +227,7 @@ function ServerAccordion({
           <div className={serverInfoStyle}>
             <span className={serverNameStyle}>
               {server.name}
-              {isActive && <span className={activeBadgeStyle}>Active</span>}
+              {isActive && <span className={activeBadgeStyle}>{t('server.active')}</span>}
             </span>
             <span className={serverUrlStyle}>{server.url}</span>
           </div>
@@ -237,14 +239,14 @@ function ServerAccordion({
           <div className={serverActionsStyle}>
             {!isActive && (
               <Button size="sm" variant="ghost" onClick={onConnect}>
-                Connect
+                {t('server.connect')}
               </Button>
             )}
             <Button size="sm" variant="ghost" onClick={startEdit}>
-              Edit
+              {t('server.edit')}
             </Button>
             <Button size="sm" variant="ghost" onClick={onRemove}>
-              Delete
+              {t('server.delete')}
             </Button>
           </div>
         )}
@@ -255,7 +257,7 @@ function ServerAccordion({
             onUrlChange={handleUrlChange}
             onSave={handleSave}
             onCancel={cancelEdit}
-            submitLabel="Save"
+            submitLabel={t('common.save')}
           />
         )}
       </div>
@@ -264,6 +266,7 @@ function ServerAccordion({
 }
 
 export function SettingsServers() {
+  const { t } = useI18n();
   const { servers, activeId, addServer, removeServer, setActive } = useServer();
   const [showAddForm, setShowAddForm] = useState(false);
   const [form, setForm] = useState<FormData>(emptyForm);
@@ -300,9 +303,9 @@ export function SettingsServers() {
   return (
     <div className={containerStyle}>
       <div>
-        <h3 className={sectionTitleStyle}>Servers</h3>
+        <h3 className={sectionTitleStyle}>{t('settings.servers')}</h3>
         <Button size="sm" variant="secondary" onClick={() => setShowAddForm(prev => !prev)} style={{ marginTop: 8 }}>
-          {showAddForm ? '− Cancel' : '+ Add Server'}
+          {showAddForm ? `− ${t('common.cancel')}` : `+ ${t('settings.add_server')}`}
         </Button>
 
         {showAddForm && (
@@ -313,13 +316,13 @@ export function SettingsServers() {
               onUrlChange={handleUrlChange}
               onSave={handleAdd}
               onCancel={cancelAdd}
-              submitLabel="Add"
+              submitLabel={t('common.save')}
             />
           </div>
         )}
 
         {servers.length === 0 && !showAddForm && (
-          <div className={emptyStateStyle}>No servers configured</div>
+          <div className={emptyStateStyle}>{t('settings.no_servers')}</div>
         )}
 
         <div className={serverListStyle}>
@@ -353,17 +356,18 @@ function ServerForm({
   onCancel: () => void;
   submitLabel: string;
 }) {
+  const { t } = useI18n();
   return (
     <div className={formStyle}>
       <Input
-        label="Server URL"
+        label={t('server.url')}
         placeholder="http://localhost:4099"
         value={form.url}
         onChange={e => onUrlChange(e.currentTarget.value)}
         size="sm"
       />
       <Input
-        label="Name"
+        label={t('server.name')}
         placeholder="My Server"
         value={form.name}
         onChange={e => setForm(f => ({ ...f, name: e.currentTarget.value }))}
@@ -371,14 +375,14 @@ function ServerForm({
       />
       <div className={formRowStyle}>
         <Input
-          label="Username"
+          label={t('server.username')}
           placeholder="Optional"
           value={form.username}
           onChange={e => setForm(f => ({ ...f, username: e.currentTarget.value }))}
           size="sm"
         />
         <Input
-          label="Password"
+          label={t('server.password')}
           placeholder="Optional"
           type="password"
           value={form.password}
@@ -387,7 +391,7 @@ function ServerForm({
         />
       </div>
       <div className={formActionsStyle}>
-        <Button size="sm" variant="ghost" onClick={onCancel}>Cancel</Button>
+        <Button size="sm" variant="ghost" onClick={onCancel}>{t('common.cancel')}</Button>
         <Button size="sm" onClick={onSave} disabled={!form.url.trim()}>{submitLabel}</Button>
       </div>
     </div>

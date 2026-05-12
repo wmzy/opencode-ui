@@ -39,6 +39,15 @@ export function I18nProvider({ children, defaultLocale = 'en' }: { children: Rea
     }
   }, []);
 
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (typeof detail === 'string') setLocale(detail);
+    };
+    window.addEventListener('opencode-locale-change', handler);
+    return () => window.removeEventListener('opencode-locale-change', handler);
+  }, []);
+
   const t = useCallback(
     (key: string, params?: Record<string, string | number>) => {
       const trans = translations[locale] ?? translations['en'] ?? {};

@@ -6,6 +6,7 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { useSdk } from '@/context/sdk';
 import { StatusPopover } from './status-popover';
+import { useI18n } from '@/context/language';
 
 const headerStyle = css`
   display: flex;
@@ -254,6 +255,7 @@ export function SessionHeader({
   modelId,
   className,
 }: SessionHeaderProps) {
+  const { t } = useI18n();
   const { client } = useSdk();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
@@ -263,7 +265,7 @@ export function SessionHeader({
   const inputRef = useRef<HTMLInputElement>(null);
   const shareRef = useRef<HTMLDivElement>(null);
 
-  const title = session?.title ?? 'New session';
+  const title = session?.title ?? t('session.new_session');
   const existingShareUrl = session?.share?.url ?? null;
 
   useEffect(() => {
@@ -416,35 +418,35 @@ export function SessionHeader({
           {contextOpen && (
             <div className={contextPopoverStyle}>
               <div className={contextStatRowStyle}>
-                <span className={contextStatLabelStyle}>Total</span>
+                <span className={contextStatLabelStyle}>{t('common.total')}</span>
                 <span className={contextStatValueStyle}>{(tokenTotal / 1000).toFixed(1)}k</span>
               </div>
               <div className={contextStatRowStyle}>
-                <span className={contextStatLabelStyle}>Input</span>
+                <span className={contextStatLabelStyle}>{t('common.input')}</span>
                 <span className={contextStatValueStyle}>{(tokenUsage.input / 1000).toFixed(1)}k</span>
               </div>
               <div className={contextStatRowStyle}>
-                <span className={contextStatLabelStyle}>Output</span>
+                <span className={contextStatLabelStyle}>{t('common.output')}</span>
                 <span className={contextStatValueStyle}>{(tokenUsage.output / 1000).toFixed(1)}k</span>
               </div>
               {tokenUsage.reasoning > 0 && (
                 <div className={contextStatRowStyle}>
-                  <span className={contextStatLabelStyle}>Reasoning</span>
+                  <span className={contextStatLabelStyle}>{t('common.reasoning')}</span>
                   <span className={contextStatValueStyle}>{(tokenUsage.reasoning / 1000).toFixed(1)}k</span>
                 </div>
               )}
               {(tokenUsage.cacheRead > 0 || tokenUsage.cacheWrite > 0) && (
                 <div className={contextStatRowStyle}>
-                  <span className={contextStatLabelStyle}>Cache</span>
+                  <span className={contextStatLabelStyle}>{t('common.cache')}</span>
                   <span className={contextStatValueStyle}>{(tokenUsage.cacheRead / 1000).toFixed(1)}k / {(tokenUsage.cacheWrite / 1000).toFixed(1)}k</span>
                 </div>
               )}
               <div className={contextStatRowStyle}>
-                <span className={contextStatLabelStyle}>Usage</span>
+                <span className={contextStatLabelStyle}>{t('common.usage')}</span>
                 <span className={contextStatValueStyle}>{Math.round(tokenPercent)}%</span>
               </div>
               <div className={contextStatRowStyle}>
-                <span className={contextStatLabelStyle}>Limit</span>
+                <span className={contextStatLabelStyle}>{t('common.limit')}</span>
                 <span className={contextStatValueStyle}>{(maxTokens / 1000).toFixed(0)}k</span>
               </div>
             </div>
@@ -505,7 +507,7 @@ export function SessionHeader({
             </button>
             {shareOpen && shareUrl && (
               <div className={sharePopoverStyle}>
-                <div className={shareUrlLabel}>Share link</div>
+                <div className={shareUrlLabel}>{t('session.share_link')}</div>
                 <div className={shareUrlStyle}>
                   <input
                     className={shareUrlInputStyle}
@@ -514,12 +516,12 @@ export function SessionHeader({
                     onFocus={(e) => e.target.select()}
                   />
                   <Button size="sm" onClick={handleCopy}>
-                    {copied ? '✓' : 'Copy'}
+                    {copied ? '✓' : t('message.copy')}
                   </Button>
                 </div>
                 <div className={shareActionsStyle}>
                   <Button size="sm" variant="danger" onClick={handleUnshare}>
-                    Unshare
+                    {t('session.unshare')}
                   </Button>
                 </div>
               </div>

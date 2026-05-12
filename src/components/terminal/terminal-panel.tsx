@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useTerminals } from '@/context/terminal';
+import { useI18n } from '@/context/language';
 import { TerminalTab } from './terminal-tab';
 
 type TerminalPanelProps = {
@@ -7,6 +8,7 @@ type TerminalPanelProps = {
   onHeightChange?: (height: number) => void;
   directory?: string;
   className?: string;
+  onClose?: () => void;
 };
 
 export function TerminalPanel({
@@ -14,20 +16,35 @@ export function TerminalPanel({
   onHeightChange,
   directory,
   className,
+  onClose,
 }: TerminalPanelProps) {
+  const { t } = useI18n();
   const { sessions, activeId, create, close, open, update, trim, setDirectory } =
     useTerminals();
   const [currentHeight, setCurrentHeight] = useState(height);
   const [connected, setConnected] = useState<Record<string, boolean>>({});
   const [resizing, setResizing] = useState(false);
   const autoCreatedRef = useRef(false);
+  const userClosedRef = useRef(false);
+
+  const prevDirectoryRef = useRef(directory);
+  const closingRef = useRef(false);
 
   useEffect(() => {
     setDirectory(directory);
-  }, [directory, setDirectory]);
+    if (prevDirectoryRef.current !== undefined && prevDirectoryRef.current !== directory && sessions.length > 0) {
+      closingRef.current = true;
+      userClosedRef.current = false;
+      Promise.all(sessions.map(s => close(s.id))).then(() => {
+        closingRef.current = false;
+        autoCreatedRef.current = false;
+      });
+    }
+    prevDirectoryRef.current = directory;
+  }, [directory, setDirectory, sessions, close]);
 
   useEffect(() => {
-    if (sessions.length === 0 && !autoCreatedRef.current) {
+    if (sessions.length === 0 && !autoCreatedRef.current && !closingRef.current && !userClosedRef.current) {
       autoCreatedRef.current = true;
       void create();
     }
@@ -38,6 +55,20 @@ export function TerminalPanel({
       autoCreatedRef.current = false;
     }
   }, [sessions.length]);
+
+  const handleClose = useCallback(
+    (id: string) => {
+      const remaining = sessions.filter(s => s.id !== id);
+      if (remaining.length === 0) {
+        userClosedRef.current = true;
+        void close(id);
+        onClose?.();
+      } else {
+        void close(id);
+      }
+    },
+    [sessions, close, onClose],
+  );
 
   const handleCreate = useCallback(async () => {
     await create();
@@ -96,7 +127,7 @@ export function TerminalPanel({
         display: 'flex',
         flexDirection: 'column',
         borderTop: '1px solid var(--color-border, #2d333b)',
-        background: '#191515',
+        background: 'var(--background-base, var(--color-bg, #0a0a0a))',
         userSelect: resizing ? 'none' : 'auto',
       }}
     >
@@ -120,7 +151,7 @@ export function TerminalPanel({
           gap: 2,
           flexShrink: 0,
           overflowX: 'auto',
-          background: 'var(--color-panel-bg, #0d1117)',
+          background: 'var(--surface-raised-base, var(--color-bg, #0d1117))',
         }}
       >
         {sessions.map((session) => (
@@ -172,7 +203,7 @@ export function TerminalPanel({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                void close(session.id);
+                handleClose(session.id);
               }}
               style={{
                 background: 'none',
@@ -202,7 +233,7 @@ export function TerminalPanel({
             padding: '2px 8px',
             lineHeight: 1,
           }}
-          aria-label="New terminal"
+          aria-label={t('terminal.new')}
         >
           +
         </button>

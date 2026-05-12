@@ -195,7 +195,7 @@ export function SidebarPanel({ project, directory, projectSdk }: SidebarPanelPro
         <button
           className={collapseBtn}
           onClick={toggleSidebar}
-          aria-label="Collapse sidebar"
+          aria-label={t('sidebar.toggle')}
         >
           ◀
         </button>
@@ -219,13 +219,13 @@ export function SidebarPanel({ project, directory, projectSdk }: SidebarPanelPro
           loading={creating}
           onClick={handleNewSession}
         >
-          + New Session
+          + {t('sidebar.new_session')}
         </Button>
       </div>
 
       <div className={listSection}>
         <ScrollArea autoHideScrollbar>
-          <div className={sectionLabel}>Sessions</div>
+          <div className={sectionLabel}>{t('sidebar.sessions')}</div>
           <SidebarSessionList
             sessions={filtered}
             loading={loading}

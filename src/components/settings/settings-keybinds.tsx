@@ -1,25 +1,26 @@
 import { css } from '@linaria/core';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { useI18n } from '@/context/language';
 
 type KeybindGroup = 'General' | 'Session' | 'Navigation' | 'Model and agent' | 'Terminal' | 'Prompt';
 
 type KeybindEntry = {
   id: string;
-  title: string;
+  titleKey: string;
   keybind: string;
   group: KeybindGroup;
 };
 
 const GROUPS: KeybindGroup[] = ['General', 'Session', 'Navigation', 'Model and agent', 'Terminal', 'Prompt'];
 
-const GROUP_LABELS: Record<KeybindGroup, string> = {
-  'General': 'General',
-  'Session': 'Session',
-  'Navigation': 'Navigation',
-  'Model and agent': 'Model and Agent',
-  'Terminal': 'Terminal',
-  'Prompt': 'Prompt',
+const GROUP_LABEL_KEYS: Record<KeybindGroup, string> = {
+  'General': 'keybind.group.general',
+  'Session': 'keybind.group.session',
+  'Navigation': 'keybind.group.navigation',
+  'Model and agent': 'keybind.group.model_agent',
+  'Terminal': 'keybind.group.terminal',
+  'Prompt': 'keybind.group.prompt',
 };
 
 function groupForId(id: string): KeybindGroup {
@@ -51,19 +52,19 @@ function formatKeybind(keybind: string): string {
 }
 
 const DEFAULT_KEYBINDS: KeybindEntry[] = [
-  { id: 'command.palette', title: 'Command Palette', keybind: 'mod+shift+p', group: 'General' },
-  { id: 'session.new', title: 'New Session', keybind: 'mod+n', group: 'Session' },
-  { id: 'session.delete', title: 'Delete Session', keybind: '', group: 'Session' },
-  { id: 'session.history', title: 'Session History', keybind: 'mod+h', group: 'Session' },
-  { id: 'settings.open', title: 'Open Settings', keybind: 'mod+,', group: 'General' },
-  { id: 'theme.cycle', title: 'Cycle Theme', keybind: 'mod+shift+t', group: 'General' },
-  { id: 'model.select', title: 'Select Model', keybind: 'mod+m', group: 'Model and agent' },
-  { id: 'agent.cycle', title: 'Cycle Agent', keybind: 'mod+shift+a', group: 'Model and agent' },
-  { id: 'prompt.submit', title: 'Submit Prompt', keybind: 'mod+enter', group: 'Prompt' },
-  { id: 'prompt.cancel', title: 'Cancel Prompt', keybind: 'escape', group: 'Prompt' },
-  { id: 'file.open', title: 'Open File', keybind: 'mod+o', group: 'Navigation' },
-  { id: 'fileTree.toggle', title: 'Toggle File Tree', keybind: 'mod+b', group: 'Navigation' },
-  { id: 'terminal.toggle', title: 'Toggle Terminal', keybind: 'mod+`', group: 'Terminal' },
+  { id: 'command.palette', titleKey: 'keybind.command_palette', keybind: 'mod+shift+p', group: 'General' },
+  { id: 'session.new', titleKey: 'keybind.new_session', keybind: 'mod+n', group: 'Session' },
+  { id: 'session.delete', titleKey: 'keybind.delete_session', keybind: '', group: 'Session' },
+  { id: 'session.history', titleKey: 'keybind.session_history', keybind: 'mod+h', group: 'Session' },
+  { id: 'settings.open', titleKey: 'keybind.open_settings', keybind: 'mod+,', group: 'General' },
+  { id: 'theme.cycle', titleKey: 'keybind.cycle_theme', keybind: 'mod+shift+t', group: 'General' },
+  { id: 'model.select', titleKey: 'keybind.select_model', keybind: 'mod+m', group: 'Model and agent' },
+  { id: 'agent.cycle', titleKey: 'keybind.cycle_agent', keybind: 'mod+shift+a', group: 'Model and agent' },
+  { id: 'prompt.submit', titleKey: 'keybind.submit_prompt', keybind: 'mod+enter', group: 'Prompt' },
+  { id: 'prompt.cancel', titleKey: 'keybind.cancel_prompt', keybind: 'escape', group: 'Prompt' },
+  { id: 'file.open', titleKey: 'keybind.open_file', keybind: 'mod+o', group: 'Navigation' },
+  { id: 'fileTree.toggle', titleKey: 'keybind.toggle_file_tree', keybind: 'mod+b', group: 'Navigation' },
+  { id: 'terminal.toggle', titleKey: 'keybind.toggle_terminal', keybind: 'mod+`', group: 'Terminal' },
 ];
 
 const IS_MAC = typeof navigator === 'object' && /(Mac|iPod|iPhone|iPad)/.test(navigator.platform);
@@ -100,6 +101,11 @@ const containerStyle = css`
   gap: 32px;
   padding: 24px 32px 48px;
   max-width: 720px;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    gap: 24px;
+  }
 `;
 
 const headerRowStyle = css`
@@ -107,6 +113,11 @@ const headerRowStyle = css`
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 `;
 
 const titleStyle = css`
@@ -131,6 +142,10 @@ const searchStyle = css`
 
   &::placeholder {
     color: var(--color-text-tertiary);
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
   }
 `;
 
@@ -202,6 +217,7 @@ const emptyStyle = css`
 `;
 
 export function SettingsKeybinds() {
+  const { t } = useI18n();
   const [customKeybinds, setCustomKeybinds] = useState<Record<string, string>>(() => {
     try {
       const stored = localStorage.getItem('opencode-keybinds');
@@ -225,10 +241,10 @@ export function SettingsKeybinds() {
     const q = filter.toLowerCase();
     return resolvedKeybinds.filter(
       entry =>
-        entry.title.toLowerCase().includes(q) ||
+        t(entry.titleKey).toLowerCase().includes(q) ||
         entry.keybind.toLowerCase().includes(q),
     );
-  }, [resolvedKeybinds, filter]);
+  }, [resolvedKeybinds, filter, t]);
 
   const grouped = useMemo(() => {
     const map: Record<string, KeybindEntry[]> = {};
@@ -298,16 +314,16 @@ export function SettingsKeybinds() {
   return (
     <div className={containerStyle}>
       <div className={headerRowStyle}>
-        <h2 className={titleStyle}>Keyboard Shortcuts</h2>
+        <h2 className={titleStyle}>{t('settings.keyboard_shortcuts')}</h2>
         <Button variant="secondary" size="sm" onClick={resetAll} disabled={!hasOverrides}>
-          Reset to Defaults
+          {t('settings.reset_defaults')}
         </Button>
       </div>
 
       <input
         className={searchStyle}
         type="text"
-        placeholder="Search shortcuts..."
+        placeholder={t('settings.search_shortcuts')}
         value={filter}
         onChange={e => setFilter(e.currentTarget.value)}
       />
@@ -317,16 +333,16 @@ export function SettingsKeybinds() {
         if (entries.length === 0) return null;
         return (
           <div key={group} className={groupStyle}>
-            <h3 className={groupTitleStyle}>{GROUP_LABELS[group]}</h3>
+            <h3 className={groupTitleStyle}>{t(GROUP_LABEL_KEYS[group])}</h3>
             {entries.map(entry => (
               <div key={entry.id} className={keybindRowStyle}>
-                <span className={keybindNameStyle}>{entry.title}</span>
+                <span className={keybindNameStyle}>{t(entry.titleKey)}</span>
                 <button
                   className={keybindButtonStyle}
                   data-capturing={activeCapture === entry.id}
                   onClick={() => setActiveCapture(prev => (prev === entry.id ? null : entry.id))}
                 >
-                  {activeCapture === entry.id ? 'Press keys...' : formatKeybind(entry.keybind)}
+                  {activeCapture === entry.id ? t('keybind.press_keys') : formatKeybind(entry.keybind)}
                 </button>
               </div>
             ))}
@@ -336,7 +352,7 @@ export function SettingsKeybinds() {
 
       {filter && !hasResults && (
         <div className={emptyStyle}>
-          No shortcuts matching &quot;{filter}&quot;
+          {t('keybind.no_match')}
         </div>
       )}
     </div>

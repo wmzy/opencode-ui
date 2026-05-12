@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Dialog } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { useI18n } from '@/context/language';
 import { useSdk } from '@/context/sdk';
 import type { Provider } from '@/types/provider';
 
@@ -13,6 +14,11 @@ const containerStyle = css`
   gap: 32px;
   padding: 24px 32px 48px;
   max-width: 720px;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    gap: 24px;
+  }
 `;
 
 const titleStyle = css`
@@ -124,15 +130,16 @@ const apiKeyFormStyle = css`
   gap: 16px;
 `;
 
-const sourceLabel = (source?: string) => {
-  if (source === 'env') return 'Environment';
-  if (source === 'api') return 'API Key';
-  if (source === 'config') return 'Config';
-  if (source === 'custom') return 'Custom';
+const getSourceLabel = (source?: string, t?: (key: string) => string) => {
+  if (source === 'env') return t ? t('settings.source_environment') : 'Environment';
+  if (source === 'api') return t ? t('settings.source_api_key') : 'API Key';
+  if (source === 'config') return t ? t('settings.source_config') : 'Config';
+  if (source === 'custom') return t ? t('settings.source_custom') : 'Custom';
   return '';
 };
 
 export function SettingsProviders() {
+  const { t } = useI18n();
   const { client } = useSdk();
   const [providers, setProviders] = useState<Provider[]>([]);
   const [connectedIds, setConnectedIds] = useState<string[]>([]);
@@ -193,10 +200,10 @@ export function SettingsProviders() {
   if (loading) {
     return (
       <div className={containerStyle}>
-        <h2 className={titleStyle}>Providers</h2>
+        <h2 className={titleStyle}>{t('settings.providers')}</h2>
         <div className={loadingStyle}>
           <Spinner size="sm" color="muted" />
-          Loading providers...
+          {t('settings.loading_providers')}
         </div>
       </div>
     );
@@ -207,15 +214,15 @@ export function SettingsProviders() {
 
   return (
     <div className={containerStyle}>
-      <h2 className={titleStyle}>Providers</h2>
+      <h2 className={titleStyle}>{t('settings.providers')}</h2>
 
       {error && <div className={errorStyle}>{error}</div>}
 
       <div>
-        <h3 className={sectionTitleStyle}>Connected</h3>
+        <h3 className={sectionTitleStyle}>{t('settings.connected')}</h3>
         <div className={providerListStyle}>
           {connected.length === 0 ? (
-            <div className={emptyStyle}>No providers connected</div>
+            <div className={emptyStyle}>{t('settings.no_providers_connected')}</div>
           ) : (
             connected.map(provider => (
               <div key={provider.id} className={providerRowStyle}>
@@ -223,10 +230,10 @@ export function SettingsProviders() {
                   <div className={cx(statusDotStyle, statusConnectedStyle)} />
                   <div className={providerIconStyle}>🔌</div>
                   <span className={providerNameStyle}>{provider.name}</span>
-                  {provider.source && <span className={providerTagStyle}>{sourceLabel(provider.source)}</span>}
+                  {provider.source && <span className={providerTagStyle}>{getSourceLabel(provider.source, t)}</span>}
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => handleDisconnect(provider.id)}>
-                  Disconnect
+                  {t('settings.disconnect')}
                 </Button>
               </div>
             ))
@@ -235,10 +242,10 @@ export function SettingsProviders() {
       </div>
 
       <div>
-        <h3 className={sectionTitleStyle}>Available</h3>
+        <h3 className={sectionTitleStyle}>{t('settings.available')}</h3>
         <div className={providerListStyle}>
           {available.length === 0 ? (
-            <div className={emptyStyle}>All available providers are connected</div>
+            <div className={emptyStyle}>{t('settings.all_providers_connected')}</div>
           ) : (
             available.map(provider => (
               <div key={provider.id} className={providerRowStyle}>
@@ -246,10 +253,10 @@ export function SettingsProviders() {
                   <div className={cx(statusDotStyle, statusDisconnectedStyle)} />
                   <div className={providerIconStyle}>🔌</div>
                   <span className={providerNameStyle}>{provider.name}</span>
-                  {provider.source && <span className={providerTagStyle}>{sourceLabel(provider.source)}</span>}
+                  {provider.source && <span className={providerTagStyle}>{getSourceLabel(provider.source, t)}</span>}
                 </div>
                 <Button variant="secondary" size="sm" onClick={() => setConnectDialog({ provider, open: true })}>
-                  Connect
+                  {t('settings.connect_provider')}
                 </Button>
               </div>
             ))
@@ -263,7 +270,7 @@ export function SettingsProviders() {
           setConnectDialog(null);
           setApiKey('');
         }}
-        title={`Connect ${connectDialog?.provider.name ?? ''}`}
+        title={t('settings.connect_provider', { name: connectDialog?.provider.name ?? '' })}
         footer={(
           <>
             <Button
@@ -273,17 +280,17 @@ export function SettingsProviders() {
                 setApiKey('');
               }}
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleConnect} disabled={!apiKey.trim() || submitting}>
-              {submitting ? 'Connecting...' : 'Connect'}
+              {submitting ? t('settings.connecting') : t('settings.connect_provider')}
             </Button>
           </>
         )}
       >
         <div className={apiKeyFormStyle}>
           <Input
-            label="API Key"
+            label={t('settings.enter_api_key')}
             type="password"
             placeholder="Enter your API key"
             value={apiKey}

@@ -10,6 +10,7 @@ import type { FileNode, FileChange } from '@/types/file';
 import type { Message } from '@/types/message';
 import type { Part } from '@/types/part';
 import type { Session } from '@/types/session';
+import { useI18n } from '@/context/language';
 
 const panelStyle = css`
   display: flex;
@@ -221,6 +222,7 @@ export type SessionSidePanelProps = {
 };
 
 export function SessionSidePanel({ onClose, className, messages, partsByMessage, session, sessionID }: SessionSidePanelProps) {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<SidePanelTab>('files');
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const { gitStatus } = useFileTree();
@@ -254,7 +256,7 @@ export function SessionSidePanel({ onClose, className, messages, partsByMessage,
                 setSelectedPath(null);
               }}
             >
-              Files
+              {t('session.files')}
             </button>
             <button
               role="tab"
@@ -265,7 +267,7 @@ export function SessionSidePanel({ onClose, className, messages, partsByMessage,
                 setSelectedPath(null);
               }}
             >
-              Changes
+              {t('session.changes')}
             </button>
             <button
               role="tab"
@@ -276,7 +278,7 @@ export function SessionSidePanel({ onClose, className, messages, partsByMessage,
                 setSelectedPath(null);
               }}
             >
-              Context
+              {t('session.context')}
             </button>
             {sessionID && (
               <button
@@ -288,11 +290,11 @@ export function SessionSidePanel({ onClose, className, messages, partsByMessage,
                   setSelectedPath(null);
                 }}
               >
-                Review
+                {t('session.review')}
               </button>
             )}
           </div>
-          <button className={closeButtonStyle} onClick={onClose} aria-label="Close panel">
+          <button className={closeButtonStyle} onClick={onClose} aria-label={t('common.close')}>
             ✕
           </button>
         </div>
@@ -324,6 +326,7 @@ type FileViewerPanelProps = {
 };
 
 function FileViewerPanel({ path, onBack }: FileViewerPanelProps) {
+  const { t } = useI18n();
   const fileState = useFileContent(path);
 
   const patch = fileState?.content?.patch;
@@ -334,7 +337,7 @@ function FileViewerPanel({ path, onBack }: FileViewerPanelProps) {
   return (
     <>
       <div className={viewerHeaderStyle}>
-        <button className={backBtnStyle} onClick={onBack} aria-label="Back">
+        <button className={backBtnStyle} onClick={onBack} aria-label={t('common.back')}>
           ←
         </button>
         <span className={viewerFilePathStyle}>{path}</span>
@@ -356,8 +359,9 @@ type ChangesListProps = {
 };
 
 function ChangesList({ changes, onFileClick }: ChangesListProps) {
+  const { t } = useI18n();
   if (changes.length === 0) {
-    return <div className={emptyStyle}>No changes detected</div>;
+    return <div className={emptyStyle}>{t('session.no_changes')}</div>;
   }
 
   const statusColors: Record<string, string> = {

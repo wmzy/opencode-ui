@@ -1,5 +1,6 @@
 import { css, cx } from '@linaria/core';
 import type { StepStartPart, StepFinishPart } from '@/types/part';
+import { useI18n } from '@/context/language';
 
 const stepStyle = css`
   display: flex;
@@ -38,7 +39,8 @@ export type MessageStepProps = {
 };
 
 export function MessageStep({ finish, className }: MessageStepProps) {
-  const label = finish?.reason ?? 'step';
+  const { t } = useI18n();
+  const label = finish?.reason ?? t('session.step');
   const isCompleted = !!finish;
 
   return (

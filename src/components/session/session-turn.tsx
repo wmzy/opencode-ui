@@ -20,6 +20,7 @@ import { MessageFiles } from './message-files';
 import { DiffAccordion } from './diff-accordion';
 import { Spinner } from '@/components/ui/spinner';
 import { ContextToolGroup, isContextGroupTool } from './tool-renderers/context-tool-group';
+import { useI18n } from '@/context/language';
 
 const turnStyle = css`
   display: flex;
@@ -306,6 +307,7 @@ function groupContextTools(items: Array<Part | StepGroup>): GroupedItem[] {
 }
 
 function PartRenderer({ part, streaming }: { part: Part; streaming: boolean }) {
+  const { t } = useI18n();
   switch (part.type) {
     case 'text':
       return <MessageText part={part as TextPart} streaming={streaming} />;
@@ -319,38 +321,38 @@ function PartRenderer({ part, streaming }: { part: Part; streaming: boolean }) {
       return (
         <div className={compactionStyle}>
           <div className={compactionLineStyle} />
-          <span className={compactionLabelStyle}>Context compacted</span>
+          <span className={compactionLabelStyle}>{t('session.context_compacted')}</span>
           <div className={compactionLineStyle} />
         </div>
       );
     }
     case 'agent': {
       const agentPart = part as AgentPart;
-      return <span className={agentBadgeStyle}>{agentPart.name ?? 'Agent'}</span>;
+      return <span className={agentBadgeStyle}>{agentPart.name ?? t('session.agent')}</span>;
     }
     case 'subtask': {
       const subtaskPart = part as SubtaskPart;
       return (
         <div className={subtaskStyle}>
           <span className={subtaskIconStyle}>⚡</span>
-          <span>{subtaskPart.description ?? 'Subtask'}</span>
+          <span>{subtaskPart.description ?? t('session.subtask')}</span>
         </div>
       );
     }
     case 'patch': {
       return (
         <div className={patchStyle}>
-          <span>📝 Patch applied</span>
+          <span>📝 {t('session.patch_applied')}</span>
         </div>
       );
     }
     case 'snapshot': {
-      return <div className={snapshotStyle}>📷 Snapshot</div>;
+      return <div className={snapshotStyle}>📷 {t('session.snapshot')}</div>;
     }
     case 'retry': {
       return (
         <div className={retryStyle}>
-          <span>⚠️ Retrying...</span>
+          <span>⚠️ {t('session.retrying')}</span>
         </div>
       );
     }
@@ -372,6 +374,7 @@ export function SessionTurn({
   summaryDiffs,
   className,
 }: SessionTurnProps) {
+  const { t } = useI18n();
   const isUser = message.role === 'user';
 
   const userTextPart = useMemo(
@@ -450,7 +453,7 @@ export function SessionTurn({
         </div>
         {actions?.revert && (
           <div className={actionsStyle}>
-            <button className={actionBtnStyle} onClick={handleRevert}>↩ Revert</button>
+            <button className={actionBtnStyle} onClick={handleRevert}>↩ {t('session.revert')}</button>
           </div>
         )}
       </div>
@@ -464,7 +467,7 @@ export function SessionTurn({
           {isStreaming && allAssistantParts.length === 0 && (
             <div className={thinkingStyle}>
               <Spinner size="sm" color="muted" />
-              <span>Thinking...</span>
+              <span>{t('message.thinking')}</span>
             </div>
           )}
           <div className={partsStyle}>
@@ -492,7 +495,7 @@ export function SessionTurn({
               return <PartRenderer key={part.id} part={part} streaming={isStreaming} />;
             })}
           </div>
-          {isInterrupted && <div className={interruptedStyle}>Interrupted</div>}
+          {isInterrupted && <div className={interruptedStyle}>{t('message.interrupted')}</div>}
           {assistantError && (
             <div className={errorStyle}>
               {typeof assistantError.data?.message === 'string' ? assistantError.data.message : 'An error occurred'}

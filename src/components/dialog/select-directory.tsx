@@ -2,6 +2,7 @@ import { css } from '@linaria/core';
 import { useState } from 'react';
 import { Dialog } from './dialog';
 import { Button } from '@/components/ui/button';
+import { useI18n } from '@/context/language';
 
 const listStyle = css`
   display: flex;
@@ -68,16 +69,17 @@ export type SelectDirectoryDialogProps = {
 };
 
 export function SelectDirectoryDialog({ open, onClose, onSelect, currentPath }: SelectDirectoryDialogProps) {
+  const { t } = useI18n();
   const [selected, setSelected] = useState<string | null>(currentPath ?? null);
 
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      title="Select Directory"
+      title={t('session.select_directory')}
       footer={(
         <div style={{ display: 'flex', gap: 8 }}>
-          <Button variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button variant="secondary" onClick={onClose}>{t('common.cancel')}</Button>
           <Button
             variant="primary"
             disabled={!selected}
@@ -88,13 +90,13 @@ export function SelectDirectoryDialog({ open, onClose, onSelect, currentPath }: 
               }
             }}
           >
-            Open
+            {t('common.open')}
           </Button>
         </div>
       )}
     >
       {RECENT_DIRS.length === 0 ? (
-        <div className={emptyStyle}>No recent directories</div>
+        <div className={emptyStyle}>{t('session.no_recent_directories')}</div>
       ) : (
         <div className={listStyle}>
           {RECENT_DIRS.map(dir => (

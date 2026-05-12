@@ -103,6 +103,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
   }, [settings.colorScheme]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem('opencode-locale', settings.language);
+    } catch {
+      // ignore
+    }
+    window.dispatchEvent(new CustomEvent('opencode-locale-change', { detail: settings.language }));
+  }, [settings.language]);
+
   return (
     <SettingsContext.Provider value={{ settings, updateSettings, resetSettings }}>
       {children}

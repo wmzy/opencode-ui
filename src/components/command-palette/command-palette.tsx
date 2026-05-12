@@ -1,6 +1,7 @@
 import { css } from '@linaria/core';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useCommands, type Command } from '@/context/command';
+import { useI18n } from '@/context/language';
 
 const overlayStyle = css`
   position: fixed;
@@ -104,6 +105,7 @@ const emptyStyle = css`
 `;
 
 export function CommandPalette() {
+  const { t } = useI18n();
   const { commands, executeCommand, paletteOpen, closePalette } = useCommands();
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -161,12 +163,12 @@ export function CommandPalette() {
         <input
           ref={inputRef}
           className={searchInput}
-          placeholder="Type a command..."
+          placeholder={t('command.search')}
           value={query}
           onChange={e => setQuery(e.target.value)}
         />
         <div className={listStyle}>
-          {flatItems.length === 0 && <div className={emptyStyle}>No commands found</div>}
+          {flatItems.length === 0 && <div className={emptyStyle}>{t('command.no_results')}</div>}
           {Object.entries(grouped).map(([group, cmds]) => (
             <div key={group}>
               <div className={groupLabel}>{group}</div>

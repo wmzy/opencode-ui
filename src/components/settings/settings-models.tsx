@@ -4,6 +4,7 @@ import { Select } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
+import { useI18n } from '@/context/language';
 import { useSdk } from '@/context/sdk';
 import type { Provider, Model } from '@/types/provider';
 import type { ProviderConfig } from '@/types/config';
@@ -14,6 +15,11 @@ const containerStyle = css`
   gap: 32px;
   padding: 24px 32px 48px;
   max-width: 720px;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    gap: 24px;
+  }
 `;
 
 const titleStyle = css`
@@ -134,6 +140,12 @@ const filterRowStyle = css`
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
 `;
 
 const filterLabelStyle = css`
@@ -158,6 +170,7 @@ const providerSectionStyle = css`
 `;
 
 export function SettingsModels() {
+  const { t } = useI18n();
   const { client } = useSdk();
   const [providers, setProviders] = useState<Provider[]>([]);
   const [loading, setLoading] = useState(true);
@@ -206,11 +219,6 @@ export function SettingsModels() {
     }
     return models;
   }, [providers]);
-
-  const providerOptions = useMemo(() => [
-    { value: 'all', label: 'All Providers' },
-    ...providers.map(p => ({ value: p.id, label: p.name })),
-  ], [providers]);
 
   const filteredModels = useMemo(() => {
     let result = allModels;
@@ -277,10 +285,10 @@ export function SettingsModels() {
   if (loading) {
     return (
       <div className={containerStyle}>
-        <h2 className={titleStyle}>Models</h2>
+        <h2 className={titleStyle}>{t('settings.models')}</h2>
         <div className={loadingStyle}>
           <Spinner size="sm" color="muted" />
-          Loading models...
+          {t('settings.loading_models')}
         </div>
       </div>
     );
@@ -288,21 +296,24 @@ export function SettingsModels() {
 
   return (
     <div className={containerStyle}>
-      <h2 className={titleStyle}>Models</h2>
+      <h2 className={titleStyle}>{t('settings.models')}</h2>
 
       {error && <div className={errorStyle}>{error}</div>}
 
       <div className={filterRowStyle}>
-        <span className={filterLabelStyle}>Filter by provider:</span>
+        <span className={filterLabelStyle}>{t('settings.filter_provider')}</span>
         <Select
-          options={providerOptions}
+          options={[
+            { value: 'all', label: t('settings.all_providers') },
+            ...providers.map(p => ({ value: p.id, label: p.name })),
+          ]}
           value={filterProvider}
           onChange={e => setFilterProvider(e.currentTarget.value)}
         />
         <div className={searchInputStyle}>
           <Input
             size="sm"
-            placeholder="Search models..."
+            placeholder={t('settings.search_models')}
             value={searchQuery}
             onChange={e => setSearchQuery(e.currentTarget.value)}
           />
@@ -310,10 +321,10 @@ export function SettingsModels() {
       </div>
 
       <div>
-        <h3 className={sectionTitleStyle}>Available Models</h3>
+        <h3 className={sectionTitleStyle}>{t('settings.available_models')}</h3>
         <div className={modelListStyle}>
           {filteredModels.length === 0 ? (
-            <div className={emptyStyle}>No models found</div>
+            <div className={emptyStyle}>{t('settings.no_models')}</div>
           ) : (
             Object.entries(groupedModels).map(([providerID, models]) => (
               <div key={providerID}>
@@ -341,11 +352,11 @@ export function SettingsModels() {
                         </div>
                         <div className={modelMetaStyle}>
                           <span>{model.id}</span>
-                          <span>Context: {(model.limit.context / 1000).toFixed(0)}K</span>
+                          <span>{t('settings.context')}: {(model.limit.context / 1000).toFixed(0)}K</span>
                           {model.cost && (
                             <>
-                              <span>In: ${model.cost.input}/MTok</span>
-                              <span>Out: ${model.cost.output}/MTok</span>
+                              <span>{t('settings.in_price')}: ${model.cost.input}/MTok</span>
+                              <span>{t('settings.out_price')}: ${model.cost.output}/MTok</span>
                             </>
                           )}
                         </div>

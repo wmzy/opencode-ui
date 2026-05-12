@@ -2,6 +2,7 @@ import { css } from '@linaria/core';
 import { useState, useEffect, useCallback } from 'react';
 import { useTheme, type ColorScheme } from '@/context/theme';
 import { useSettings } from '@/context/settings';
+import { useI18n } from '@/context/language';
 import { Switch } from '@/components/ui/switch';
 import { Select } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -13,6 +14,11 @@ const containerStyle = css`
   gap: 32px;
   padding: 24px 32px 48px;
   max-width: 720px;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    gap: 24px;
+  }
 `;
 
 const sectionTitleStyle = css`
@@ -65,9 +71,13 @@ const rowControlStyle = css`
 
 const themeGridStyle = css`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   gap: 8px;
   margin-top: 8px;
+
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  }
 `;
 
 const themeCardStyle = css`
@@ -148,9 +158,14 @@ const fontRowStyle = css`
   &:last-child {
     border-bottom: none;
   }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 export function SettingsGeneral() {
+  const { t } = useI18n();
   const theme = useTheme();
   const { settings, updateSettings } = useSettings();
   const { client } = useSdk();
@@ -177,9 +192,9 @@ export function SettingsGeneral() {
   }, [fetchShells]);
 
   const colorSchemes: { value: ColorScheme; label: string }[] = [
-    { value: 'system', label: 'System' },
-    { value: 'light', label: 'Light' },
-    { value: 'dark', label: 'Dark' },
+    { value: 'system', label: t('theme.system') },
+    { value: 'light', label: t('theme.light') },
+    { value: 'dark', label: t('theme.dark') },
   ];
 
   const languageOptions = [
@@ -188,7 +203,7 @@ export function SettingsGeneral() {
   ];
 
   const shellOptions = [
-    { value: '', label: 'Default' },
+    { value: '', label: t('settings.default') },
     ...shells.filter(s => s.acceptable).map(s => ({ value: s.path, label: s.name })),
   ];
 
@@ -209,12 +224,12 @@ export function SettingsGeneral() {
   return (
     <div className={containerStyle}>
       <div>
-        <h3 className={sectionTitleStyle}>Appearance</h3>
+        <h3 className={sectionTitleStyle}>{t('settings.appearance')}</h3>
         <div className={settingsListStyle}>
           <div className={settingsRowStyle}>
             <div className={rowTextStyle}>
-              <span className={rowTitleStyle}>Color Scheme</span>
-              <span className={rowDescStyle}>Choose between light and dark mode</span>
+              <span className={rowTitleStyle}>{t('settings.color_scheme')}</span>
+              <span className={rowDescStyle}>{t('settings.color_scheme_desc')}</span>
             </div>
             <div className={rowControlStyle}>
               <div className={colorSchemeRowStyle}>
@@ -236,8 +251,8 @@ export function SettingsGeneral() {
 
           <div className={settingsRowStyle}>
             <div className={rowTextStyle}>
-              <span className={rowTitleStyle}>Theme</span>
-              <span className={rowDescStyle}>Select a color theme for the interface</span>
+              <span className={rowTitleStyle}>{t('settings.theme')}</span>
+              <span className={rowDescStyle}>{t('settings.theme_desc')}</span>
             </div>
           </div>
           <div className={themeGridStyle}>
@@ -265,12 +280,12 @@ export function SettingsGeneral() {
       </div>
 
       <div>
-        <h3 className={sectionTitleStyle}>General</h3>
+        <h3 className={sectionTitleStyle}>{t('settings.general')}</h3>
         <div className={settingsListStyle}>
           <div className={settingsRowStyle}>
             <div className={rowTextStyle}>
-              <span className={rowTitleStyle}>Language</span>
-              <span className={rowDescStyle}>Select interface language</span>
+              <span className={rowTitleStyle}>{t('settings.language')}</span>
+              <span className={rowDescStyle}>{t('settings.language_desc')}</span>
             </div>
             <div className={rowControlStyle}>
               <Select
@@ -283,8 +298,8 @@ export function SettingsGeneral() {
 
           <div className={settingsRowStyle}>
             <div className={rowTextStyle}>
-              <span className={rowTitleStyle}>Shell</span>
-              <span className={rowDescStyle}>Default shell for terminal sessions</span>
+              <span className={rowTitleStyle}>{t('settings.shell')}</span>
+              <span className={rowDescStyle}>{t('settings.shell_desc')}</span>
             </div>
             <div className={rowControlStyle}>
               <Select
@@ -297,8 +312,8 @@ export function SettingsGeneral() {
 
           <div className={settingsRowStyle}>
             <div className={rowTextStyle}>
-              <span className={rowTitleStyle}>Font Size</span>
-              <span className={rowDescStyle}>Adjust the base font size</span>
+              <span className={rowTitleStyle}>{t('settings.font_size')}</span>
+              <span className={rowDescStyle}>{t('settings.font_size_desc')}</span>
             </div>
             <div className={rowControlStyle}>
               <input
@@ -318,12 +333,12 @@ export function SettingsGeneral() {
       </div>
 
       <div>
-        <h3 className={sectionTitleStyle}>Behavior</h3>
+        <h3 className={sectionTitleStyle}>{t('settings.behavior')}</h3>
         <div className={settingsListStyle}>
           <div className={settingsRowStyle}>
             <div className={rowTextStyle}>
-              <span className={rowTitleStyle}>Auto-accept Permissions</span>
-              <span className={rowDescStyle}>Automatically accept tool permission requests</span>
+              <span className={rowTitleStyle}>{t('settings.auto_accept')}</span>
+              <span className={rowDescStyle}>{t('settings.auto_accept_desc')}</span>
             </div>
             <div className={rowControlStyle}>
               <Switch
@@ -335,8 +350,8 @@ export function SettingsGeneral() {
 
           <div className={settingsRowStyle}>
             <div className={rowTextStyle}>
-              <span className={rowTitleStyle}>Reasoning Summaries</span>
-              <span className={rowDescStyle}>Show reasoning parts in message view</span>
+              <span className={rowTitleStyle}>{t('settings.reasoning')}</span>
+              <span className={rowDescStyle}>{t('settings.reasoning_desc')}</span>
             </div>
             <div className={rowControlStyle}>
               <Switch
@@ -348,8 +363,8 @@ export function SettingsGeneral() {
 
           <div className={settingsRowStyle}>
             <div className={rowTextStyle}>
-              <span className={rowTitleStyle}>Expand Shell Output</span>
-              <span className={rowDescStyle}>Show shell tool output expanded by default</span>
+              <span className={rowTitleStyle}>{t('settings.expand_shell')}</span>
+              <span className={rowDescStyle}>{t('settings.expand_shell_desc')}</span>
             </div>
             <div className={rowControlStyle}>
               <Switch
@@ -361,8 +376,8 @@ export function SettingsGeneral() {
 
           <div className={settingsRowStyle}>
             <div className={rowTextStyle}>
-              <span className={rowTitleStyle}>Expand Edit Diffs</span>
-              <span className={rowDescStyle}>Show file edit diffs expanded by default</span>
+              <span className={rowTitleStyle}>{t('settings.expand_diffs')}</span>
+              <span className={rowDescStyle}>{t('settings.expand_diffs_desc')}</span>
             </div>
             <div className={rowControlStyle}>
               <Switch
@@ -375,26 +390,26 @@ export function SettingsGeneral() {
       </div>
 
       <div>
-        <h3 className={sectionTitleStyle}>Fonts</h3>
+        <h3 className={sectionTitleStyle}>{t('settings.fonts')}</h3>
         <div className={fontRowStyle}>
           <Input
-            label="UI Font"
+            label={t('settings.ui_font')}
             size="sm"
-            placeholder="System default"
+            placeholder={t('settings.font_system_default')}
             value={settings.uiFont ?? ''}
             onChange={e => updateSettings({ uiFont: e.currentTarget.value })}
           />
           <Input
-            label="Code Font"
+            label={t('settings.code_font')}
             size="sm"
-            placeholder="Monospace"
+            placeholder={t('settings.font_monospace')}
             value={settings.codeFont ?? ''}
             onChange={e => updateSettings({ codeFont: e.currentTarget.value })}
           />
           <Input
-            label="Terminal Font"
+            label={t('settings.terminal_font')}
             size="sm"
-            placeholder="Monospace"
+            placeholder={t('settings.font_monospace')}
             value={settings.terminalFont ?? ''}
             onChange={e => updateSettings({ terminalFont: e.currentTarget.value })}
           />
@@ -402,12 +417,12 @@ export function SettingsGeneral() {
       </div>
 
       <div>
-        <h3 className={sectionTitleStyle}>Notifications</h3>
+        <h3 className={sectionTitleStyle}>{t('settings.notifications')}</h3>
         <div className={settingsListStyle}>
           <div className={settingsRowStyle}>
             <div className={rowTextStyle}>
-              <span className={rowTitleStyle}>Agent Notifications</span>
-              <span className={rowDescStyle}>Notify when agent completes a task</span>
+              <span className={rowTitleStyle}>{t('settings.agent_notifications')}</span>
+              <span className={rowDescStyle}>{t('settings.agent_notifications_desc')}</span>
             </div>
             <div className={rowControlStyle}>
               <Switch
@@ -419,8 +434,8 @@ export function SettingsGeneral() {
 
           <div className={settingsRowStyle}>
             <div className={rowTextStyle}>
-              <span className={rowTitleStyle}>Permission Notifications</span>
-              <span className={rowDescStyle}>Notify when permissions are requested</span>
+              <span className={rowTitleStyle}>{t('settings.permission_notifications')}</span>
+              <span className={rowDescStyle}>{t('settings.permission_notifications_desc')}</span>
             </div>
             <div className={rowControlStyle}>
               <Switch
@@ -432,8 +447,8 @@ export function SettingsGeneral() {
 
           <div className={settingsRowStyle}>
             <div className={rowTextStyle}>
-              <span className={rowTitleStyle}>Error Notifications</span>
-              <span className={rowDescStyle}>Show desktop notifications for errors</span>
+              <span className={rowTitleStyle}>{t('settings.error_notifications')}</span>
+              <span className={rowDescStyle}>{t('settings.error_notifications_desc')}</span>
             </div>
             <div className={rowControlStyle}>
               <Switch
@@ -445,8 +460,8 @@ export function SettingsGeneral() {
 
           <div className={settingsRowStyle}>
             <div className={rowTextStyle}>
-              <span className={rowTitleStyle}>Desktop Notifications</span>
-              <span className={rowDescStyle}>Show desktop notifications</span>
+              <span className={rowTitleStyle}>{t('settings.desktop_notifications')}</span>
+              <span className={rowDescStyle}>{t('settings.desktop_notifications_desc')}</span>
             </div>
             <div className={rowControlStyle}>
               <Switch
@@ -459,12 +474,12 @@ export function SettingsGeneral() {
       </div>
 
       <div>
-        <h3 className={sectionTitleStyle}>Sounds</h3>
+        <h3 className={sectionTitleStyle}>{t('settings.sounds_section')}</h3>
         <div className={settingsListStyle}>
           <div className={settingsRowStyle}>
             <div className={rowTextStyle}>
-              <span className={rowTitleStyle}>Enable Sounds</span>
-              <span className={rowDescStyle}>Play sounds for notifications</span>
+              <span className={rowTitleStyle}>{t('settings.enable_sounds')}</span>
+              <span className={rowDescStyle}>{t('settings.enable_sounds_desc')}</span>
             </div>
             <div className={rowControlStyle}>
               <Switch
@@ -476,16 +491,16 @@ export function SettingsGeneral() {
 
           <div className={settingsRowStyle}>
             <div className={rowTextStyle}>
-              <span className={rowTitleStyle}>Agent Sound</span>
-              <span className={rowDescStyle}>Sound played when agent completes</span>
+              <span className={rowTitleStyle}>{t('settings.agent_sound')}</span>
+              <span className={rowDescStyle}>{t('settings.agent_sound_desc')}</span>
             </div>
             <div className={rowControlStyle}>
               <Select
                 options={[
-                  { value: 'default', label: 'Default' },
-                  { value: 'ping', label: 'Ping' },
-                  { value: 'chime', label: 'Chime' },
-                  { value: 'none', label: 'None' },
+                  { value: 'default', label: t('settings.default') },
+                  { value: 'ping', label: t('settings.ping') },
+                  { value: 'chime', label: t('settings.chime') },
+                  { value: 'none', label: t('settings.none') },
                 ]}
                 value={settings.agentSound ?? 'default'}
                 onChange={e => updateSettings({ agentSound: e.currentTarget.value })}
@@ -495,16 +510,16 @@ export function SettingsGeneral() {
 
           <div className={settingsRowStyle}>
             <div className={rowTextStyle}>
-              <span className={rowTitleStyle}>Error Sound</span>
-              <span className={rowDescStyle}>Sound played on errors</span>
+              <span className={rowTitleStyle}>{t('settings.error_sound')}</span>
+              <span className={rowDescStyle}>{t('settings.error_sound_desc')}</span>
             </div>
             <div className={rowControlStyle}>
               <Select
                 options={[
-                  { value: 'default', label: 'Default' },
-                  { value: 'beep', label: 'Beep' },
-                  { value: 'alert', label: 'Alert' },
-                  { value: 'none', label: 'None' },
+                  { value: 'default', label: t('settings.default') },
+                  { value: 'beep', label: t('settings.beep') },
+                  { value: 'alert', label: t('settings.alert') },
+                  { value: 'none', label: t('settings.none') },
                 ]}
                 value={settings.errorSound ?? 'default'}
                 onChange={e => updateSettings({ errorSound: e.currentTarget.value })}
@@ -515,12 +530,12 @@ export function SettingsGeneral() {
       </div>
 
       <div>
-        <h3 className={sectionTitleStyle}>About</h3>
+        <h3 className={sectionTitleStyle}>{t('settings.about')}</h3>
         <div className={settingsListStyle}>
           <div className={settingsRowStyle}>
             <div className={rowTextStyle}>
               <span className={rowTitleStyle}>OpenCode UI</span>
-              <span className={rowDescStyle}>Version 0.1.0</span>
+              <span className={rowDescStyle}>{t('settings.version')}</span>
             </div>
           </div>
         </div>

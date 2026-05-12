@@ -1,5 +1,6 @@
 import { css } from '@linaria/core';
 import { Dialog } from './dialog';
+import { useI18n } from '@/context/language';
 
 const notesStyle = css`
   display: flex;
@@ -70,8 +71,9 @@ export type ReleaseNotesDialogProps = {
 };
 
 export function ReleaseNotesDialog({ open, onClose }: ReleaseNotesDialogProps) {
+  const { t } = useI18n();
   return (
-    <Dialog open={open} onClose={onClose} title="Release Notes">
+    <Dialog open={open} onClose={onClose} title={t('session.release_notes')}>
       <div className={notesStyle}>
         {RELEASE_NOTES.map(release => (
           <div key={release.version} className={versionStyle}>

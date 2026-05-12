@@ -2,6 +2,7 @@ import { css, cx } from '@linaria/core';
 import { useState, useCallback } from 'react';
 import type { ReasoningPart } from '@/types/part';
 import { MarkdownRenderer } from './markdown-renderer';
+import { useI18n } from '@/context/language';
 
 const wrapperStyle = css`
   margin: 6px 0;
@@ -62,6 +63,7 @@ export type MessageReasoningProps = {
 };
 
 export function MessageReasoning({ part, className }: MessageReasoningProps) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const text = part.text?.trim();
   const handleToggle = useCallback(() => setOpen((prev) => !prev), []);
@@ -71,7 +73,7 @@ export function MessageReasoning({ part, className }: MessageReasoningProps) {
   return (
     <div className={cx(wrapperStyle, className)}>
       <button className={triggerStyle} onClick={handleToggle} aria-expanded={open}>
-        <span className={labelStyle}>💭 Reasoning</span>
+        <span className={labelStyle}>💭 {t('message.reasoning')}</span>
         <svg className={cx(chevronStyle, open && chevronExpandedStyle)} viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
           <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
         </svg>

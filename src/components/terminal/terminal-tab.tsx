@@ -3,8 +3,24 @@ import type { Terminal as Term, FitAddon, Ghostty } from 'ghostty-web';
 import type { LocalPTY } from '@/context/terminal';
 import { useSdk } from '@/context/sdk';
 import { useServer } from '@/context/server';
+import { useTheme } from '@/context/theme';
 import { terminalWriter } from '@/lib/terminal-writer';
 import { terminalWebSocketURL } from '@/lib/terminal-websocket-url';
+
+function readCSSVar(name: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+function buildTerminalColors() {
+  const bg = readCSSVar('--background-base') || readCSSVar('--color-bg') || '#0a0a0a';
+  const fg = readCSSVar('--text-strong') || readCSSVar('--color-text') || '#e5e5e5';
+  return {
+    background: bg,
+    foreground: fg,
+    cursor: fg,
+    selectionBackground: 'rgba(212, 212, 212, 0.25)',
+  };
+}
 
 type TerminalTabProps = {
   pty: LocalPTY;
@@ -41,8 +57,10 @@ export function TerminalTab({
   onCleanup,
 }: TerminalTabProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const termRef = useRef<Term | null>(null);
   const { client, baseUrl, getSdk } = useSdk();
   const { active: serverConn } = useServer();
+  const { mode } = useTheme();
 
   const directoryRef = useRef(directory);
   directoryRef.current = directory;
@@ -339,12 +357,7 @@ export function TerminalTab({
         fontFamily: 'monospace',
         allowTransparency: false,
         convertEol: false,
-        theme: {
-          background: '#191515',
-          foreground: '#d4d4d4',
-          cursor: '#d4d4d4',
-          selectionBackground: 'rgba(212, 212, 212, 0.25)',
-        },
+        theme: buildTerminalColors(),
         scrollback: 10_000,
         ghostty: g,
       });
@@ -355,6 +368,7 @@ export function TerminalTab({
       }
 
       term = t;
+      termRef.current = t;
       output = terminalWriter((data, done) => {
         t.write(data, done);
       });
@@ -589,6 +603,7 @@ export function TerminalTab({
 
     return () => {
       disposed = true;
+      termRef.current = null;
       if (reconn !== undefined) clearTimeout(reconn);
       drop?.();
       if (
@@ -623,6 +638,16 @@ export function TerminalTab({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pty.id]);
 
+  useEffect(() => {
+    const t = termRef.current;
+    if (!t) return;
+    try {
+      t.setTheme(buildTerminalColors());
+    } catch {
+      // ignore
+    }
+  }, [mode]);
+
   return (
     <div
       role="tabpanel"
@@ -631,7 +656,7 @@ export function TerminalTab({
         height: '100%',
         overflow: 'hidden',
         position: 'relative',
-        backgroundColor: '#191515',
+        backgroundColor: 'var(--background-base, var(--color-bg, #0a0a0a))',
       }}
     >
       <div

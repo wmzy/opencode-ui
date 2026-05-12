@@ -6,6 +6,7 @@ import { SessionTurn } from './session-turn';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useI18n } from '@/context/language';
 
 const containerStyle = css`
   flex: 1;
@@ -167,10 +168,11 @@ export function MessageTimeline({
   onLoadMore,
   actions,
   streamingMessageID,
-  emptyTitle = 'Start a conversation',
-  emptySubtitle = 'Send a message to begin chatting with the AI assistant.',
+  emptyTitle,
+  emptySubtitle,
   className,
 }: MessageTimelineProps) {
+  const { t } = useI18n();
   const scrollRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [showScrollBottom, setShowScrollBottom] = useState(false);
@@ -209,8 +211,8 @@ export function MessageTimeline({
       <div className={cx(containerStyle, className)}>
         <div className={emptyStateStyle}>
           <div className={emptyIconStyle}>💬</div>
-          <div className={emptyTitleStyle}>{emptyTitle}</div>
-          <div className={emptySubtitleStyle}>{emptySubtitle}</div>
+          <div className={emptyTitleStyle}>{emptyTitle ?? t('session.start_conversation')}</div>
+          <div className={emptySubtitleStyle}>{emptySubtitle ?? t('session.send_message_to_begin')}</div>
         </div>
       </div>
     );
@@ -224,7 +226,7 @@ export function MessageTimeline({
             {hasMore && (
               <div className={loadMoreStyle}>
                 <Button variant="ghost" size="sm" onClick={onLoadMore}>
-                  Load earlier messages
+                  {t('session.load_earlier_messages')}
                 </Button>
               </div>
             )}
@@ -264,7 +266,7 @@ export function MessageTimeline({
       </ScrollArea>
       {showScrollBottom && (
         <button className={scrollBottomBtnStyle} onClick={scrollToBottom}>
-          ↓ New messages
+          ↓ {t('session.new_messages')}
         </button>
       )}
     </div>

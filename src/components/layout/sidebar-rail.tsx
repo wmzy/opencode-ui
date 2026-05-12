@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useSdk } from '@/context/sdk';
 import { useLayout } from '@/context/layout';
 import { useNotification } from '@/context/notification';
+import { useI18n } from '@/context/language';
 import { Tooltip } from '@/components/ui/tooltip';
 import type { Project } from '@/types/project';
 
@@ -383,6 +384,7 @@ export type SidebarRailProps = {
 };
 
 export function SidebarRail({ onSettings }: SidebarRailProps) {
+  const { t } = useI18n();
   const { client, getSdk } = useSdk();
   const { layout, toggleSidebar } = useLayout();
   const notification = useNotification();
@@ -578,11 +580,11 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
     <>
       <div className={railStyle}>
         <div className={railItems}>
-          <Tooltip content="Open project" position="right">
+          <Tooltip content={t('sidebar.add_project')} position="right">
             <button
               className={iconButton}
               onClick={() => setAddProjectOpen(true)}
-              aria-label="Open project"
+              aria-label={t('sidebar.add_project')}
             >
               +
             </button>
@@ -621,11 +623,11 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
 
         <div className={bottomSection}>
           {onSettings && (
-            <Tooltip content="Settings" position="right">
+            <Tooltip content={t('settings.title')} position="right">
               <button
                 className={iconButton}
                 onClick={onSettings}
-                aria-label="Settings"
+                aria-label={t('settings.title')}
               >
                 ⚙
               </button>
@@ -641,25 +643,25 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
           style={{ left: contextMenu.x, top: contextMenu.y }}
         >
           <button className={contextMenuItemStyle} onClick={handleEdit}>
-            编辑
+            {t('project.edit')}
           </button>
           <button
             className={contextMenuItemStyle}
             onClick={handleToggleWorkspace}
             disabled={contextMenu.project.vcs !== 'git' && !workspaceEnabled[contextMenu.project.worktree]}
           >
-            {workspaceEnabled[contextMenu.project.worktree] ? '禁用工作区' : '启用工作区'}
+            {workspaceEnabled[contextMenu.project.worktree] ? t('workspace.disable') : t('workspace.enable')}
           </button>
           <button
             className={contextMenuItemStyle}
             onClick={handleClearNotifications}
             disabled={!contextMenu || notification.project.unseenCount(contextMenu.project.worktree) === 0}
           >
-            清除通知
+            {t('notification.clear')}
           </button>
           <div className={contextMenuSeparator} />
           <button className={cx(contextMenuItemStyle, contextMenuDangerStyle)} onClick={handleCloseProject}>
-            关闭
+            {t('project.close')}
           </button>
         </div>
       )}
@@ -668,10 +670,10 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
         <div className={editOverlayStyle} onClick={() => setEditingProject(null)}>
           <div className={editDialogStyle} onClick={(e) => e.stopPropagation()}>
             <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text)' }}>
-              编辑项目
+              {t('project.edit')}
             </div>
             <div className={editFieldStyle}>
-              <label>名称</label>
+              <label>{t('project.name')}</label>
               <input
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
@@ -684,10 +686,10 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
             </div>
             <div className={editActionsStyle}>
               <button className={editBtnStyle} onClick={() => setEditingProject(null)}>
-                取消
+                {t('common.cancel')}
               </button>
               <button className={editBtnPrimaryStyle} onClick={handleEditSave}>
-                保存
+                {t('common.save')}
               </button>
             </div>
           </div>
@@ -698,7 +700,7 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
         <div className={editOverlayStyle} onClick={() => { setAddProjectOpen(false); setAddProjectPath(''); setAddProjectSearch(''); }}>
           <div className={editDialogStyle} onClick={(e) => e.stopPropagation()}>
             <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text)' }}>
-              打开项目
+              {t('project.open')}
             </div>
             <div className={editFieldStyle}>
               <input
@@ -707,7 +709,7 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
                 onKeyDown={(e) => {
                   if (e.key === 'Escape') { setAddProjectOpen(false); setAddProjectPath(''); setAddProjectSearch(''); }
                 }}
-                placeholder="搜索项目..."
+                placeholder={t('sidebar.search_projects')}
                 autoFocus
               />
             </div>
@@ -734,11 +736,11 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
                 ))
               }
               {addProjectFiltered.length === 0 && (
-                <div className={noResultsStyle}>无匹配项目</div>
+                <div className={noResultsStyle}>{t('sidebar.no_results')}</div>
               )}
             </div>
             <div className={editFieldStyle}>
-              <label>自定义路径</label>
+              <label>{t('sidebar.custom_path')}</label>
               <input
                 value={addProjectPath}
                 onChange={(e) => setAddProjectPath(e.target.value)}
@@ -751,10 +753,10 @@ export function SidebarRail({ onSettings }: SidebarRailProps) {
             </div>
             <div className={editActionsStyle}>
               <button className={editBtnStyle} onClick={() => { setAddProjectOpen(false); setAddProjectPath(''); setAddProjectSearch(''); }}>
-                取消
+                {t('common.cancel')}
               </button>
               <button className={editBtnPrimaryStyle} onClick={handleAddProject} disabled={!addProjectPath.trim()}>
-                打开
+                {t('project.open_action')}
               </button>
             </div>
           </div>

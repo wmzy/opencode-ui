@@ -421,6 +421,7 @@ export function SessionPage() {
           height={terminalHeight}
           onHeightChange={setTerminalHeight}
           directory={directory}
+          onClose={() => setTerminalOpen(false)}
         />
       )}
     </div>

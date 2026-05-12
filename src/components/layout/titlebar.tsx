@@ -1,5 +1,6 @@
 import { css } from '@linaria/core';
 import type { ReactNode } from 'react';
+import { useI18n } from '@/context/language';
 
 const headerStyle = css`
   display: flex;
@@ -58,14 +59,15 @@ export type TitlebarProps = {
 };
 
 export function Titlebar({ title, actions, onToggleSidebar, showSidebarToggle }: TitlebarProps) {
+  const { t } = useI18n();
   return (
     <div className={headerStyle}>
       {showSidebarToggle && (
-        <button className={actionButton} onClick={onToggleSidebar} title="Toggle sidebar">
+        <button className={actionButton} onClick={onToggleSidebar} title={t('sidebar.toggle')}>
           ☰
         </button>
       )}
-      <span className={titleStyle}>{title ?? 'OpenCode'}</span>
+      <span className={titleStyle}>{title ?? t('app.name')}</span>
       {actions && <div className={actionsStyle}>{actions}</div>}
     </div>
   );

@@ -1,6 +1,7 @@
 import { css } from '@linaria/core';
 import { Dialog } from './dialog';
 import { Button } from '@/components/ui/button';
+import { useI18n } from '@/context/language';
 
 type ProviderOption = {
   id: string;
@@ -66,8 +67,9 @@ export type SelectProviderDialogProps = {
 };
 
 export function SelectProviderDialog({ open, onClose, onSelect }: SelectProviderDialogProps) {
+  const { t } = useI18n();
   return (
-    <Dialog open={open} onClose={onClose} title="Select Provider">
+    <Dialog open={open} onClose={onClose} title={t('session.select_provider')}>
       <div className={listStyle}>
         {PROVIDERS.map(provider => (
           <div
@@ -84,7 +86,7 @@ export function SelectProviderDialog({ open, onClose, onSelect }: SelectProvider
                 <span className={itemDescStyle}>{provider.description}</span>
               )}
             </div>
-            <Button variant="secondary" size="sm">Connect</Button>
+            <Button variant="secondary" size="sm">{t('session.connect')}</Button>
           </div>
         ))}
       </div>

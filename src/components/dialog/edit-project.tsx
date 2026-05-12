@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Dialog } from './dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useI18n } from '@/context/language';
 
 const formStyle = css`
   display: flex;
@@ -18,6 +19,7 @@ export type EditProjectDialogProps = {
 };
 
 export function EditProjectDialog({ open, onClose, currentName = '', onSave }: EditProjectDialogProps) {
+  const { t } = useI18n();
   const [name, setName] = useState(currentName);
 
   const handleSave = () => {
@@ -30,12 +32,12 @@ export function EditProjectDialog({ open, onClose, currentName = '', onSave }: E
     <Dialog
       open={open}
       onClose={onClose}
-      title="Edit Project Name"
+      title={t('session.edit_project_name')}
       footer={(
         <div style={{ display: 'flex', gap: 8 }}>
-          <Button variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button variant="secondary" onClick={onClose}>{t('common.cancel')}</Button>
           <Button variant="primary" onClick={handleSave} disabled={!name.trim()}>
-            Save
+            {t('common.save')}
           </Button>
         </div>
       )}

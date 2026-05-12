@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { Dialog } from '../dialog/dialog';
 import { Collapsible } from '../ui/collapsible';
 import { useIsMobile } from '@/hooks/use-media-query';
+import { useI18n } from '@/context/language';
 import { SettingsGeneral } from './settings-general';
 import { SettingsKeybinds } from './settings-keybinds';
 import { SettingsProviders } from './settings-providers';
@@ -95,6 +96,7 @@ const mobileDialogStyle = css`
   height: calc(100vh - 40px);
   max-height: none;
   position: relative;
+  overflow: hidden;
 `;
 
 const accordionStyle = css`
@@ -104,22 +106,23 @@ const accordionStyle = css`
   padding: 12px;
   overflow-y: auto;
   height: 100%;
+  -webkit-overflow-scrolling: touch;
 `;
 
 type SettingsTab = {
   id: string;
-  label: string;
+  labelKey: string;
   icon: string;
-  section?: string;
+  sectionKey: string;
   content: ReactNode;
 };
 
 const TABS: SettingsTab[] = [
-  { id: 'general', label: 'General', icon: '⚙', section: 'Desktop', content: <SettingsGeneral /> },
-  { id: 'keybinds', label: 'Shortcuts', icon: '⌨', section: 'Desktop', content: <SettingsKeybinds /> },
-  { id: 'servers', label: 'Servers', icon: '🌐', section: 'Server', content: <SettingsServers /> },
-  { id: 'providers', label: 'Providers', icon: '🔌', section: 'Server', content: <SettingsProviders /> },
-  { id: 'models', label: 'Models', icon: '🤖', section: 'Server', content: <SettingsModels /> },
+  { id: 'general', labelKey: 'settings.tab.general', icon: '⚙', sectionKey: 'settings.section.desktop', content: <SettingsGeneral /> },
+  { id: 'keybinds', labelKey: 'settings.tab.shortcuts', icon: '⌨', sectionKey: 'settings.section.desktop', content: <SettingsKeybinds /> },
+  { id: 'servers', labelKey: 'settings.tab.servers', icon: '🌐', sectionKey: 'settings.section.server', content: <SettingsServers /> },
+  { id: 'providers', labelKey: 'settings.tab.providers', icon: '🔌', sectionKey: 'settings.section.server', content: <SettingsProviders /> },
+  { id: 'models', labelKey: 'settings.tab.models', icon: '🤖', sectionKey: 'settings.section.server', content: <SettingsModels /> },
 ];
 
 export type SettingsDialogProps = {
@@ -130,6 +133,7 @@ export type SettingsDialogProps = {
 
 export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
   const isMobile = useIsMobile();
+  const { t } = useI18n();
 
   if (isMobile) {
     return (
@@ -139,7 +143,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
             <Collapsible
               key={tab.id}
               trigger={
-                <span>{tab.icon} {tab.label}</span>
+                <span>{tab.icon} {t(tab.labelKey)}</span>
               }
             >
               {tab.content}
@@ -155,9 +159,10 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
 
 function DesktopSettings({ open, onClose }: SettingsDialogProps) {
   const [activeTab, setActiveTab] = useState('general');
+  const { t } = useI18n();
 
   const tabsBySection = TABS.reduce<Record<string, SettingsTab[]>>((acc, tab) => {
-    const section = tab.section ?? 'General';
+    const section = tab.sectionKey ?? 'settings.section.desktop';
     if (!acc[section]) acc[section] = [];
     acc[section].push(tab);
     return acc;
@@ -172,7 +177,7 @@ function DesktopSettings({ open, onClose }: SettingsDialogProps) {
           <div className={sidebarSectionStyle}>
             {Object.entries(tabsBySection).map(([section, tabs]) => (
               <div key={section} className={sidebarSectionStyle}>
-                <div className={sectionTitleStyle}>{section}</div>
+                <div className={sectionTitleStyle}>{t(section)}</div>
                 {tabs.map(tab => (
                   <button
                     key={tab.id}
@@ -181,7 +186,7 @@ function DesktopSettings({ open, onClose }: SettingsDialogProps) {
                     onClick={() => setActiveTab(tab.id)}
                   >
                     <span>{tab.icon}</span>
-                    {tab.label}
+                    {t(tab.labelKey)}
                   </button>
                 ))}
               </div>
