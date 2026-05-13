@@ -392,6 +392,7 @@ export function SessionPage() {
             partsByMessage={partsByMessage}
             session={sessionData as import('@/types/session').Session | undefined}
             sessionID={id}
+            directory={directory}
           />
         )}
       </div>

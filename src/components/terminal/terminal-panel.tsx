@@ -126,8 +126,8 @@ export function TerminalPanel({
         height: currentHeight,
         display: 'flex',
         flexDirection: 'column',
-        borderTop: '1px solid var(--color-border, #2d333b)',
-        background: 'var(--background-base, var(--color-bg, #0a0a0a))',
+        borderTop: '1px solid var(--color-border)',
+        background: 'var(--color-bg)',
         userSelect: resizing ? 'none' : 'auto',
       }}
     >
@@ -146,12 +146,12 @@ export function TerminalPanel({
           display: 'flex',
           alignItems: 'center',
           padding: '0 4px',
-          borderBottom: '1px solid var(--color-border, #2d333b)',
+          borderBottom: '1px solid var(--color-border)',
           fontSize: 12,
           gap: 2,
           flexShrink: 0,
           overflowX: 'auto',
-          background: 'var(--surface-raised-base, var(--color-bg, #0d1117))',
+          background: 'var(--color-bg-secondary)',
         }}
       >
         {sessions.map((session) => (
@@ -172,7 +172,7 @@ export function TerminalPanel({
               border: 'none',
               borderBottom:
                 session.id === activeId
-                  ? '2px solid var(--color-accent, #388bfd)'
+                  ? '2px solid var(--color-accent)'
                   : '2px solid transparent',
               color: 'var(--color-text, inherit)',
               cursor: 'pointer',
@@ -185,7 +185,7 @@ export function TerminalPanel({
                 width: 6,
                 height: 6,
                 borderRadius: '50%',
-                background: connected[session.id] ? '#3fb950' : '#f85149',
+                background: connected[session.id] ? 'var(--color-success)' : 'var(--color-error)',
                 flexShrink: 0,
               }}
             />
@@ -208,7 +208,7 @@ export function TerminalPanel({
               style={{
                 background: 'none',
                 border: 'none',
-                color: 'var(--color-muted, #636e7b)',
+                color: 'var(--color-text-tertiary)',
                 cursor: 'pointer',
                 fontSize: 14,
                 padding: '0 4px',
@@ -227,7 +227,7 @@ export function TerminalPanel({
             marginLeft: 'auto',
             background: 'none',
             border: 'none',
-            color: 'var(--color-muted, #636e7b)',
+            color: 'var(--color-text-tertiary)',
             cursor: 'pointer',
             fontSize: 16,
             padding: '2px 8px',

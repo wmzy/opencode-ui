@@ -280,7 +280,7 @@ function PatchFileList({ files }: { files: PatchFile[] }) {
             </div>
             {isExpanded && file.patch && (
               <div className={diffContainerStyle}>
-                <DiffViewer patch={file.patch} filePath={file.filePath} />
+                <DiffViewer patch={file.patch} filePath={file.filePath} showHeader={false} />
               </div>
             )}
           </div>

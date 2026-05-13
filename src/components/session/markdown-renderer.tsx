@@ -1,9 +1,20 @@
 import { css, cx } from '@linaria/core';
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { marked } from 'marked';
 import { CodeBlock } from './code-block';
 
 const renderer = new marked.Renderer();
+
+renderer.heading = function ({ text, depth }) {
+  const slug = text
+    .toLowerCase()
+    .replace(/<[^>]+>/g, '')
+    .replace(/[^\p{L}\p{N}\s-]/gu, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  return `<h${depth} id="${slug}">${text}</h${depth}>`;
+};
 
 const markdownStyle = css`
   font-size: 14px;
@@ -134,6 +145,9 @@ type ParsedBlock = {
   type: 'code';
   code: string;
   language: string;
+} | {
+  type: 'mermaid';
+  code: string;
 };
 
 function parseBlocks(text: string): ParsedBlock[] {
@@ -151,7 +165,7 @@ function parseBlocks(text: string): ParsedBlock[] {
       }
     }
     blocks.push({
-      type: 'code',
+      type: match[1] === 'mermaid' ? 'mermaid' : 'code',
       language: match[1] || 'text',
       code: match[2].replace(/\n$/, ''),
     });
@@ -191,16 +205,103 @@ function getHighlighter(): Promise<ShikiHighlighter | null> {
   return highlighterPromise;
 }
 
+const mermaidStyle = css`
+  margin: 8px 0;
+  padding: 16px;
+  background: var(--color-bg-secondary);
+  border-radius: 8px;
+  overflow-x: auto;
+  text-align: center;
+
+  svg {
+    max-width: 100%;
+    height: auto;
+  }
+`;
+
+const mermaidErrorStyle = css`
+  margin: 8px 0;
+  padding: 12px 16px;
+  background: rgba(248, 81, 73, 0.1);
+  border: 1px solid rgba(248, 81, 73, 0.3);
+  border-radius: 8px;
+  color: var(--color-error);
+  font-size: 13px;
+  font-family: monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+`;
+
+let mermaidIdCounter = 0;
+
+type MermaidDiagramProps = {
+  code: string;
+};
+
+function MermaidDiagram({ code }: MermaidDiagramProps) {
+  const [svg, setSvg] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const idRef = useRef(`mermaid-${++mermaidIdCounter}`);
+
+  const renderMermaid = useCallback(async () => {
+    try {
+      const mermaid = await import('mermaid');
+      const m = mermaid.default;
+      m.initialize({
+        startOnLoad: false,
+        theme: 'dark',
+        securityLevel: 'loose',
+      });
+      const { svg: renderedSvg } = await m.render(idRef.current, code);
+      setSvg(renderedSvg);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      setSvg(null);
+    }
+  }, [code]);
+
+  useEffect(() => {
+    renderMermaid();
+  }, [renderMermaid]);
+
+  if (error) {
+    return (
+      <div className={mermaidErrorStyle}>
+        Mermaid render error: {error}
+      </div>
+    );
+  }
+
+  if (!svg) {
+    return (
+      <div className={mermaidStyle} style={{ opacity: 0.5, fontSize: 13 }}>
+        Rendering diagram...
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={mermaidStyle}
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
+  );
+}
+
 export type MarkdownRendererProps = {
   text: string;
   streaming?: boolean;
   className?: string;
+  basePath?: string;
+  onFileLinkClick?: (path: string) => void;
 };
 
-export function MarkdownRenderer({ text, className }: MarkdownRendererProps) {
+export function MarkdownRenderer({ text, className, basePath, onFileLinkClick }: MarkdownRendererProps) {
   const blocks = useMemo(() => parseBlocks(text), [text]);
   const [highlightedCode, setHighlightedCode] = useState<Record<number, string>>({});
   const mountedRef = useRef(true);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -208,6 +309,53 @@ export function MarkdownRenderer({ text, className }: MarkdownRendererProps) {
       mountedRef.current = false;
     };
   }, []);
+
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    const anchor = target.closest('a') as HTMLAnchorElement | null;
+    if (!anchor) return;
+
+    const href = anchor.getAttribute('href');
+    if (!href) return;
+
+    e.preventDefault();
+
+    if (href.startsWith('#')) {
+      const id = decodeURIComponent(href.slice(1));
+      const container = containerRef.current;
+      if (!container) return;
+      const el = container.querySelector(`[id="${CSS.escape(id)}"]`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      return;
+    }
+
+    if (onFileLinkClick && basePath) {
+      try {
+        let resolved: string;
+        const decodedHref = decodeURIComponent(href);
+        if (decodedHref.startsWith('/') || decodedHref.startsWith('http://') || decodedHref.startsWith('https://')) {
+          resolved = decodedHref;
+        } else {
+          const baseDir = basePath.includes('/') ? basePath.substring(0, basePath.lastIndexOf('/')) : '';
+          const parts = baseDir ? `${baseDir}/${decodedHref}`.split('/') : decodedHref.split('/');
+          const stack: string[] = [];
+          for (const part of parts) {
+            if (part === '..') {
+              stack.pop();
+            } else if (part !== '.' && part !== '') {
+              stack.push(part);
+            }
+          }
+          resolved = stack.join('/');
+        }
+        onFileLinkClick(resolved);
+      } catch {
+        // ignore
+      }
+    }
+  }, [basePath, onFileLinkClick]);
 
   useEffect(() => {
     let cancelled = false;
@@ -240,8 +388,11 @@ export function MarkdownRenderer({ text, className }: MarkdownRendererProps) {
   if (!textTrimmed) return null;
 
   return (
-    <div className={cx(markdownStyle, className)}>
+    <div className={cx(markdownStyle, className)} ref={containerRef} onClick={handleClick}>
       {blocks.map((block, i) => {
+        if (block.type === 'mermaid') {
+          return <MermaidDiagram key={i} code={block.code} />;
+        }
         if (block.type === 'code') {
           const html = highlightedCode[i];
           return (

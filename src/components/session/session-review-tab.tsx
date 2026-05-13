@@ -8,6 +8,7 @@ import type { FileDiff } from '@/types/common';
 
 export type SessionReviewTabProps = {
   sessionID: string;
+  directory?: string;
   className?: string;
 };
 
@@ -354,9 +355,14 @@ function ReviewDiffItem({ diff, isExpanded, onToggle }: ReviewDiffItemProps) {
 
   const patch = useMemo(() => {
     if (!hasBeenExpanded) return '';
+    if (typeof diff.patch === 'string' && diff.patch) {
+      const lines = diff.patch.split('\n');
+      const cleaned = lines.filter(l => !l.startsWith('Index: ') && !l.startsWith('===') && !l.startsWith('--- ') && !l.startsWith('+++ '));
+      return cleaned.join('\n');
+    }
     if (diff.before == null && diff.after == null) return '';
     return generateUnifiedDiff(diff.before ?? '', diff.after ?? '', diff.file);
-  }, [hasBeenExpanded, diff.before, diff.after, diff.file]);
+  }, [hasBeenExpanded, diff]);
 
   const isNew = diff.before === '' && diff.after !== '';
   const isDeleted = diff.after === '' && diff.before !== '';
@@ -371,13 +377,13 @@ function ReviewDiffItem({ diff, isExpanded, onToggle }: ReviewDiffItemProps) {
       >
         <span className={diffTriggerLeftStyle}>
           {isNew && (
-            <span className={statusBadgeStyle} style={{ color: '#3fb950' }}>A</span>
+             <span className={statusBadgeStyle} style={{ color: 'var(--color-success)' }}>A</span>
           )}
           {isDeleted && (
-            <span className={statusBadgeStyle} style={{ color: '#f85149' }}>D</span>
+             <span className={statusBadgeStyle} style={{ color: 'var(--color-error)' }}>D</span>
           )}
           {!isNew && !isDeleted && (
-            <span className={statusBadgeStyle} style={{ color: '#e2b340' }}>M</span>
+             <span className={statusBadgeStyle} style={{ color: 'var(--color-warning)' }}>M</span>
           )}
           {directory && (
             <span className={diffDirectoryStyle}>{`\u202A${directory}\u202C`}</span>
@@ -385,7 +391,7 @@ function ReviewDiffItem({ diff, isExpanded, onToggle }: ReviewDiffItemProps) {
           <span className={diffFilenameStyle}>{filename}</span>
         </span>
         <span className={diffMetaStyle}>
-          <DiffChanges changes={diff} variant="bars" />
+          <DiffChanges changes={diff} />
           <svg
             className={cx(chevronStyle, isExpanded && chevronExpandedStyle)}
             viewBox="0 0 20 20"
@@ -401,13 +407,13 @@ function ReviewDiffItem({ diff, isExpanded, onToggle }: ReviewDiffItemProps) {
         </span>
       </button>
       <div className={cx(diffContentStyle, !isExpanded && diffContentHiddenStyle)}>
-        {hasBeenExpanded && patch && <DiffViewer patch={patch} filePath={diff.file} />}
+        {hasBeenExpanded && patch && <DiffViewer patch={patch} filePath={diff.file} showHeader={false} />}
       </div>
     </div>
   );
 }
 
-export function SessionReviewTab({ sessionID, className }: SessionReviewTabProps) {
+export function SessionReviewTab({ sessionID, directory, className }: SessionReviewTabProps) {
   const { getSdk } = useSdk();
   const [diffs, setDiffs] = useState<FileDiff[]>([]);
   const [loading, setLoading] = useState(true);
@@ -422,7 +428,7 @@ export function SessionReviewTab({ sessionID, className }: SessionReviewTabProps
     setLoading(true);
     setError(null);
 
-    const sdk = getSdk(sessionID);
+    const sdk = getSdk(directory ?? '');
     sdk.session
       .diff(sessionID, { signal: controller.signal })
       .then((data) => {

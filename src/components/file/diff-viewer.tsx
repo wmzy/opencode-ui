@@ -159,11 +159,12 @@ function computeCollapsedGroups(
 type DiffViewerProps = {
   patch: string;
   filePath?: string;
+  showHeader?: boolean;
   collapsible?: boolean;
   className?: string;
 };
 
-export function DiffViewer({ patch, filePath, collapsible = true, className }: DiffViewerProps) {
+export function DiffViewer({ patch, filePath, showHeader = true, collapsible = true, className }: DiffViewerProps) {
   const [expanded, setExpanded] = useState(false);
   const [highlightedLines, setHighlightedLines] = useState<Record<number, string>>({});
 
@@ -241,15 +242,15 @@ export function DiffViewer({ patch, filePath, collapsible = true, className }: D
         lineHeight: 1.5,
         borderRadius: 6,
         overflow: 'hidden',
-        border: '1px solid var(--color-border, #2d333b)',
+        border: '1px solid var(--color-border)',
       }}
     >
-      {filePath && (
+      {showHeader && filePath && (
         <div
           style={{
             padding: '6px 12px',
             background: 'var(--color-header-bg, rgba(255,255,255,0.03))',
-            borderBottom: '1px solid var(--color-border, #2d333b)',
+            borderBottom: '1px solid var(--color-border)',
             display: 'flex',
             alignItems: 'center',
             gap: 8,
@@ -257,8 +258,8 @@ export function DiffViewer({ patch, filePath, collapsible = true, className }: D
           }}
         >
           <span style={{ opacity: 0.7 }}>{filePath}</span>
-          <span style={{ color: '#3fb950' }}>+{stats.additions}</span>
-          <span style={{ color: '#f85149' }}>-{stats.deletions}</span>
+          <span style={{ color: 'var(--color-success)' }}>+{stats.additions}</span>
+          <span style={{ color: 'var(--color-error)' }}>-{stats.deletions}</span>
         </div>
       )}
       <div style={{ overflowX: 'auto' }}>
@@ -271,7 +272,7 @@ export function DiffViewer({ patch, filePath, collapsible = true, className }: D
                     width: 48,
                     textAlign: 'right',
                     paddingRight: 8,
-                    color: 'var(--color-muted, #636e7b)',
+                    color: 'var(--color-text-tertiary)',
                     background: gutterBgColors[line.type],
                     borderRight: `2px solid ${lineColors[line.type]}`,
                     fontSize: 12,
@@ -286,9 +287,9 @@ export function DiffViewer({ patch, filePath, collapsible = true, className }: D
                     width: 48,
                     textAlign: 'right',
                     paddingRight: 8,
-                    color: 'var(--color-muted, #636e7b)',
+                    color: 'var(--color-text-tertiary)',
                     background: gutterBgColors[line.type],
-                    borderRight: '1px solid var(--color-border, #2d333b)',
+                    borderRight: '1px solid var(--color-border)',
                     fontSize: 12,
                     userSelect: 'none',
                     flexShrink: 0,
@@ -305,7 +306,7 @@ export function DiffViewer({ patch, filePath, collapsible = true, className }: D
                 padding: line.type === 'hunk-header' ? '2px 12px' : '0 12px',
                 color:
                   line.type === 'hunk-header'
-                    ? 'var(--color-muted, #636e7b)'
+                    ? 'var(--color-text-tertiary)'
                     : undefined,
                 fontSize: line.type === 'hunk-header' ? 12 : 13,
                 minWidth: 0,
@@ -336,7 +337,7 @@ export function DiffViewer({ patch, filePath, collapsible = true, className }: D
             style={{
               padding: '4px 12px',
               background: 'rgba(255,255,255,0.03)',
-              color: 'var(--color-muted, #636e7b)',
+              color: 'var(--color-text-tertiary)',
               fontSize: 12,
               cursor: 'pointer',
               textAlign: 'center',

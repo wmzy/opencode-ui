@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { useFileContent } from '@/context/file';
+import { MarkdownRenderer } from '@/components/session/markdown-renderer';
 
 type ShikiHighlighter = {
   codeToHtml: (code: string, opts: { lang: string; theme: string }) => string;
@@ -67,7 +68,7 @@ function langFromPath(path: string): string {
   return map[ext] ?? ext;
 }
 
-const BINARY_EXTENSIONS = new Set([
+const IMAGE_EXTENSIONS = new Set([
   'png',
   'jpg',
   'jpeg',
@@ -75,6 +76,11 @@ const BINARY_EXTENSIONS = new Set([
   'webp',
   'ico',
   'svg',
+  'bmp',
+  'avif',
+]);
+
+const BINARY_EXTENSIONS = new Set([
   'woff',
   'woff2',
   'ttf',
@@ -95,28 +101,41 @@ const BINARY_EXTENSIONS = new Set([
   'pdf',
 ]);
 
+function isImagePath(path: string): boolean {
+  const ext = path.split('.').pop()?.toLowerCase() ?? '';
+  return IMAGE_EXTENSIONS.has(ext);
+}
+
 function isBinaryPath(path: string): boolean {
   const ext = path.split('.').pop()?.toLowerCase() ?? '';
   return BINARY_EXTENSIONS.has(ext);
+}
+
+function isMarkdownPath(path: string): boolean {
+  const ext = path.split('.').pop()?.toLowerCase() ?? '';
+  return ext === 'md' || ext === 'mdx';
 }
 
 type FileViewerProps = {
   path: string;
   maxHeight?: number;
   onLineClick?: (lineNumber: number) => void;
+  onFileLinkClick?: (path: string) => void;
   className?: string;
 };
 
-export function FileViewer({ path, maxHeight = 600, onLineClick, className }: FileViewerProps) {
+export function FileViewer({ path, maxHeight = 600, onLineClick, onFileLinkClick, className }: FileViewerProps) {
   const fileState = useFileContent(path);
   const [highlighted, setHighlighted] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const lang = useMemo(() => langFromPath(path), [path]);
   const binary = isBinaryPath(path);
+  const image = isImagePath(path);
+  const markdown = isMarkdownPath(path);
 
   useEffect(() => {
-    if (!fileState?.content || binary) return;
+    if (!fileState?.content || binary || image || markdown) return;
     const content =
       fileState.content.type === 'text' ? fileState.content.content : '';
 
@@ -147,6 +166,27 @@ export function FileViewer({ path, maxHeight = 600, onLineClick, className }: Fi
     };
   }, [fileState?.content, lang, binary]);
 
+  if (image) {
+    return (
+      <div className={className} style={{ padding: 16, textAlign: 'center' }}>
+        <img
+          src={path}
+          alt={path.split('/').pop() ?? 'image'}
+          style={{
+            maxWidth: '100%',
+            maxHeight: typeof maxHeight === 'number' ? maxHeight : 600,
+            borderRadius: 6,
+          }}
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).style.display = 'none';
+            const parent = (e.currentTarget as HTMLImageElement).parentElement;
+            if (parent) parent.textContent = `Image: ${path.split('/').pop()}`;
+          }}
+        />
+      </div>
+    );
+  }
+
   if (fileState?.loading) {
     return (
       <div
@@ -161,7 +201,7 @@ export function FileViewer({ path, maxHeight = 600, onLineClick, className }: Fi
         <div
           style={{
             height: 14,
-            background: 'var(--color-border, #2d333b)',
+            background: 'var(--color-border)',
             borderRadius: 4,
             marginBottom: 8,
             width: '60%',
@@ -170,7 +210,7 @@ export function FileViewer({ path, maxHeight = 600, onLineClick, className }: Fi
         <div
           style={{
             height: 14,
-            background: 'var(--color-border, #2d333b)',
+            background: 'var(--color-border)',
             borderRadius: 4,
             marginBottom: 8,
             width: '80%',
@@ -179,7 +219,7 @@ export function FileViewer({ path, maxHeight = 600, onLineClick, className }: Fi
         <div
           style={{
             height: 14,
-            background: 'var(--color-border, #2d333b)',
+            background: 'var(--color-border)',
             borderRadius: 4,
             width: '45%',
           }}
@@ -194,7 +234,7 @@ export function FileViewer({ path, maxHeight = 600, onLineClick, className }: Fi
         className={className}
         style={{
           padding: 16,
-          color: 'var(--color-error, #f85149)',
+          color: 'var(--color-error)',
           fontSize: 13,
         }}
       >
@@ -215,6 +255,30 @@ export function FileViewer({ path, maxHeight = 600, onLineClick, className }: Fi
         }}
       >
         Binary file: {path.split('/').pop()}
+      </div>
+    );
+  }
+
+  if (markdown) {
+    const content = fileState?.content?.type === 'text' ? fileState.content.content : '';
+    if (fileState?.loading) {
+      return (
+        <div className={className} style={{ padding: 16, opacity: 0.5, fontSize: 13 }}>
+          Loading...
+        </div>
+      );
+    }
+    if (!content) return null;
+    return (
+      <div
+        className={className}
+        style={{
+          maxHeight,
+          overflow: 'auto',
+          padding: 16,
+        }}
+      >
+        <MarkdownRenderer text={content} basePath={path} onFileLinkClick={onFileLinkClick} />
       </div>
     );
   }
@@ -242,9 +306,9 @@ export function FileViewer({ path, maxHeight = 600, onLineClick, className }: Fi
           style={{
             padding: '8px 12px',
             background: 'rgba(227, 179, 65, 0.15)',
-            color: '#e2b340',
+            color: 'var(--color-warning)',
             fontSize: 12,
-            borderBottom: '1px solid var(--color-border, #2d333b)',
+            borderBottom: '1px solid var(--color-border)',
           }}
         >
           Large file ({(sizeBytes / 1024).toFixed(1)} KB) — performance may be affected
@@ -261,11 +325,11 @@ export function FileViewer({ path, maxHeight = 600, onLineClick, className }: Fi
               width: 48,
               textAlign: 'right',
               paddingRight: 8,
-              color: 'var(--color-muted, #636e7b)',
+              color: 'var(--color-text-tertiary)',
               fontSize: 12,
               lineHeight: 1.5,
               userSelect: 'none',
-              borderRight: '1px solid var(--color-border, #2d333b)',
+              borderRight: '1px solid var(--color-border)',
             }}
           >
             {lines.map((_, i) => (

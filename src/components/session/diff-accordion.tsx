@@ -359,7 +359,7 @@ function DiffItem({ diff }: { diff: FileDiff }) {
         </span>
       </button>
       <div className={cx(diffContentStyle, !isExpanded && diffContentHiddenStyle)}>
-        {hasBeenExpanded && patch && <DiffViewer patch={patch} />}
+        {hasBeenExpanded && patch && <DiffViewer patch={patch} filePath={diff.file} showHeader={false} />}
       </div>
     </div>
   );

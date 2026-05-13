@@ -219,9 +219,10 @@ export type SessionSidePanelProps = {
   partsByMessage?: Map<string, Part[]>;
   session?: Session;
   sessionID?: string;
+  directory?: string;
 };
 
-export function SessionSidePanel({ onClose, className, messages, partsByMessage, session, sessionID }: SessionSidePanelProps) {
+export function SessionSidePanel({ onClose, className, messages, partsByMessage, session, sessionID, directory }: SessionSidePanelProps) {
   const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<SidePanelTab>('files');
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
@@ -300,7 +301,7 @@ export function SessionSidePanel({ onClose, className, messages, partsByMessage,
         </div>
         <div className={panelContentStyle}>
           {selectedPath ? (
-            <FileViewerPanel path={selectedPath} onBack={handleBack} />
+            <FileViewerPanel path={selectedPath} onBack={handleBack} preferDiff={activeTab === 'changes'} onNavigateToFile={setSelectedPath} />
           ) : activeTab === 'files' ? (
             <FileTree onFileClick={handleFileClick} />
           ) : activeTab === 'context' ? (
@@ -310,7 +311,7 @@ export function SessionSidePanel({ onClose, className, messages, partsByMessage,
               session={session}
             />
           ) : activeTab === 'review' && sessionID ? (
-            <SessionReviewTab sessionID={sessionID} />
+            <SessionReviewTab sessionID={sessionID} directory={directory} />
           ) : (
             <ChangesList changes={gitStatus} onFileClick={handleChangeClick} />
           )}
@@ -323,9 +324,11 @@ export function SessionSidePanel({ onClose, className, messages, partsByMessage,
 type FileViewerPanelProps = {
   path: string;
   onBack: () => void;
+  preferDiff?: boolean;
+  onNavigateToFile?: (path: string) => void;
 };
 
-function FileViewerPanel({ path, onBack }: FileViewerPanelProps) {
+function FileViewerPanel({ path, onBack, preferDiff = false, onNavigateToFile }: FileViewerPanelProps) {
   const { t } = useI18n();
   const fileState = useFileContent(path);
 
@@ -342,12 +345,12 @@ function FileViewerPanel({ path, onBack }: FileViewerPanelProps) {
         </button>
         <span className={viewerFilePathStyle}>{path}</span>
       </div>
-      {hasDiff && diffText ? (
+      {preferDiff && hasDiff && diffText ? (
         <div style={{ flex: 1, overflow: 'auto' }}>
-          <DiffViewer patch={diffText} filePath={path} />
+          <DiffViewer patch={diffText} filePath={path} showHeader={false} />
         </div>
       ) : (
-        <FileViewer path={path} maxHeight={Number.MAX_SAFE_INTEGER} />
+        <FileViewer path={path} maxHeight={Number.MAX_SAFE_INTEGER} onFileLinkClick={onNavigateToFile} />
       )}
     </>
   );
@@ -365,9 +368,9 @@ function ChangesList({ changes, onFileClick }: ChangesListProps) {
   }
 
   const statusColors: Record<string, string> = {
-    added: '#3fb950',
-    modified: '#e2b340',
-    deleted: '#f85149',
+    added: 'var(--color-success)',
+    modified: 'var(--color-warning)',
+    deleted: 'var(--color-error)',
   };
 
   const statusLetters: Record<string, string> = {
@@ -394,18 +397,18 @@ function ChangesList({ changes, onFileClick }: ChangesListProps) {
         >
           <span
             className={statusBadgeBaseStyle}
-            style={{ color: statusColors[change.status] ?? '#8b949e' }}
+            style={{ color: statusColors[change.status] ?? 'var(--color-text-tertiary)' }}
           >
             {statusLetters[change.status] ?? '?'}
           </span>
           <span className={changePathStyle}>{change.path}</span>
           {change.added > 0 && (
-            <span style={{ fontSize: 11, color: '#3fb950', flexShrink: 0 }}>
+            <span style={{ fontSize: 11, color: 'var(--color-success)', flexShrink: 0 }}>
               +{change.added}
             </span>
           )}
           {change.removed > 0 && (
-            <span style={{ fontSize: 11, color: '#f85149', flexShrink: 0 }}>
+            <span style={{ fontSize: 11, color: 'var(--color-error)', flexShrink: 0 }}>
               -{change.removed}
             </span>
           )}

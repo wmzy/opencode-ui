@@ -656,7 +656,7 @@ export function TerminalTab({
         height: '100%',
         overflow: 'hidden',
         position: 'relative',
-        backgroundColor: 'var(--background-base, var(--color-bg, #0a0a0a))',
+        backgroundColor: 'var(--color-bg)',
       }}
     >
       <div

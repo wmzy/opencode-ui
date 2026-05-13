@@ -19,10 +19,10 @@ function getGitKind(path: string, changes: FileChange[]): GitStatusKind | null {
 
 function KindBadge({ kind }: { kind: GitStatusKind }) {
   const colors: Record<GitStatusKind, string> = {
-    M: '#e2b340',
-    A: '#3fb950',
-    D: '#f85149',
-    U: '#8b949e',
+    M: 'var(--color-warning)',
+    A: 'var(--color-success)',
+    D: 'var(--color-error)',
+    U: 'var(--color-text-tertiary)',
   };
   return (
     <span
@@ -183,14 +183,32 @@ export function FileTree({
   const [searchQuery, setSearchQuery] = useState('');
 
   const rootNodes = useMemo(() => {
-    const nodes = tree.children(rootPath);
-    if (!searchQuery) return nodes;
+    return tree.children(rootPath);
+  }, [tree, rootPath]);
+
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return null;
     const q = searchQuery.toLowerCase();
-    return nodes.filter((n) => n.name.toLowerCase().includes(q));
+    const results: FileNode[] = [];
+
+    function collect(path: string) {
+      const children = tree.children(path);
+      for (const child of children) {
+        if (child.name.toLowerCase().includes(q)) {
+          results.push(child);
+        }
+        if (child.type === 'directory') {
+          collect(child.path);
+        }
+      }
+    }
+
+    collect(rootPath);
+    return results;
   }, [tree, rootPath, searchQuery]);
 
   const isEmpty = rootNodes.length === 0 && !searchQuery;
-  const noResults = rootNodes.length === 0 && !!searchQuery;
+  const noResults = searchResults !== null && searchResults.length === 0;
   const dirState = tree.state(rootPath);
 
   return (
@@ -198,7 +216,7 @@ export function FileTree({
       className={className}
       style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}
     >
-      <div style={{ padding: '6px 8px', borderBottom: '1px solid var(--color-border, #2d333b)' }}>
+      <div style={{ padding: '6px 8px', borderBottom: '1px solid var(--color-border)' }}>
         <input
           type="text"
           value={searchQuery}
@@ -206,8 +224,8 @@ export function FileTree({
           placeholder="Filter files..."
           style={{
             width: '100%',
-            background: 'var(--color-input-bg, #161b22)',
-            border: '1px solid var(--color-border, #2d333b)',
+            background: 'var(--color-bg-tertiary)',
+            border: '1px solid var(--color-border)',
             borderRadius: 4,
             padding: '4px 8px',
             fontSize: 12,
@@ -232,7 +250,58 @@ export function FileTree({
             No matching files
           </div>
         )}
-        {rootNodes.map((node) => (
+        {searchResults ? searchResults.map((node) => (
+          <div
+            key={node.path}
+            role="button"
+            tabIndex={0}
+            onClick={() => node.type === 'file' && onFileClick?.(node)}
+            onKeyDown={(e) => {
+              if ((e.key === 'Enter' || e.key === ' ') && node.type === 'file') {
+                e.preventDefault();
+                onFileClick?.(node);
+              }
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              paddingLeft: 8,
+              paddingRight: 8,
+              height: 26,
+              cursor: node.type === 'file' ? 'pointer' : 'default',
+              borderRadius: 4,
+              backgroundColor: node.path === activePath ? 'var(--color-active, rgba(56,139,253,0.15))' : 'transparent',
+              fontSize: 13,
+              userSelect: 'none',
+            }}
+            onMouseEnter={(e) => {
+              if (node.path !== activePath) {
+                (e.currentTarget as HTMLDivElement).style.backgroundColor =
+                  'var(--color-hover, rgba(255,255,255,0.05))';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (node.path !== activePath) {
+                (e.currentTarget as HTMLDivElement).style.backgroundColor = 'transparent';
+              }
+            }}
+          >
+            <span style={{ width: 14, flexShrink: 0 }} />
+            <FileIcon node={node} />
+            <span
+              style={{
+                flex: 1,
+                minWidth: 0,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {node.path}
+            </span>
+          </div>
+        )) : rootNodes.map((node) => (
           <TreeNode
             key={node.path}
             node={node}
