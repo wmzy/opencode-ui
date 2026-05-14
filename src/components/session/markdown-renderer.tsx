@@ -1,6 +1,7 @@
 import { css, cx } from '@linaria/core';
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { marked } from 'marked';
+import { IconButton } from '@/components/ui/icon-button';
 import { CodeBlock } from './code-block';
 
 const renderer = new marked.Renderer();
@@ -232,6 +233,141 @@ const mermaidErrorStyle = css`
   word-break: break-word;
 `;
 
+/* ── Mermaid container with fullscreen & zoom support ── */
+
+const mermaidContainerStyle = css`
+  position: relative;
+  overflow: hidden;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  margin: 8px 0;
+  text-align: center;
+
+  &:fullscreen {
+    background: var(--color-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    width: 100vw;
+    height: 100vh;
+  }
+`;
+
+const mermaidViewportStyle = css`
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
+  width: 100%;
+`;
+
+const mermaidTransformStyle = css`
+  line-height: 0;
+  will-change: transform;
+`;
+
+const mermaidToolbarStyle = css`
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 10;
+  pointer-events: auto;
+`;
+
+const mermaidToolbarVisibleStyle = css`
+  opacity: 1;
+`;
+
+const mermaidZoomBadgeStyle = css`
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 10;
+  font-family: monospace;
+  letter-spacing: 0.5px;
+`;
+
+/* ── SVG icon components ── */
+
+const iconStyle = css`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+function FullscreenIcon() {
+  return (
+    <span className={iconStyle}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+      </svg>
+    </span>
+  );
+}
+
+function FullscreenExitIcon() {
+  return (
+    <span className={iconStyle}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
+      </svg>
+    </span>
+  );
+}
+
+function ZoomInIcon() {
+  return (
+    <span className={iconStyle}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        <line x1="11" y1="8" x2="11" y2="14" />
+        <line x1="8" y1="11" x2="14" y2="11" />
+      </svg>
+    </span>
+  );
+}
+
+function ZoomOutIcon() {
+  return (
+    <span className={iconStyle}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        <line x1="8" y1="11" x2="14" y2="11" />
+      </svg>
+    </span>
+  );
+}
+
+function ResetZoomIcon() {
+  return (
+    <span className={iconStyle}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="23 4 23 10 17 10" />
+        <polyline points="1 20 1 14 7 14" />
+        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+      </svg>
+    </span>
+  );
+}
+
+/* ── MermaidDiagram component ── */
+
 let mermaidIdCounter = 0;
 
 type MermaidDiagramProps = {
@@ -241,8 +377,45 @@ type MermaidDiagramProps = {
 function MermaidDiagram({ code }: MermaidDiagramProps) {
   const [svg, setSvg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const idRef = useRef(`mermaid-${++mermaidIdCounter}`);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [userScale, setUserScale] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [hovered, setHovered] = useState(false);
 
+  const idRef = useRef(`mermaid-${++mermaidIdCounter}`);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const lastMouseRef = useRef<{ x: number; y: number } | null>(null);
+  const svgMetaRef = useRef<{ width: number; height: number } | null>(null);
+
+  /* ── Fullscreen ── */
+  useEffect(() => {
+    const handler = () => {
+      const fs = !!document.fullscreenElement;
+      setIsFullscreen(fs);
+      if (!fs) {
+        setUserScale(1);
+        setPan({ x: 0, y: 0 });
+      }
+    };
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
+  }, []);
+
+  const toggleFullscreen = useCallback(async () => {
+    if (!containerRef.current) return;
+    try {
+      if (!document.fullscreenElement) {
+        await containerRef.current.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch {
+      // user gesture may be missing
+    }
+  }, []);
+
+  /* ── Mermaid render ── */
   const renderMermaid = useCallback(async () => {
     try {
       const mermaid = await import('mermaid');
@@ -253,6 +426,17 @@ function MermaidDiagram({ code }: MermaidDiagramProps) {
         securityLevel: 'loose',
       });
       const { svg: renderedSvg } = await m.render(idRef.current, code);
+
+      /* ── Extract original SVG dimensions ── */
+      const sw = renderedSvg.match(/width="(\d+(?:\.\d+)?)"/);
+      const sh = renderedSvg.match(/height="(\d+(?:\.\d+)?)"/);
+      if (sw && sh) {
+        svgMetaRef.current = {
+          width: parseFloat(sw[1]),
+          height: parseFloat(sh[1]),
+        };
+      }
+
       setSvg(renderedSvg);
       setError(null);
     } catch (err) {
@@ -265,6 +449,102 @@ function MermaidDiagram({ code }: MermaidDiagramProps) {
     renderMermaid();
   }, [renderMermaid]);
 
+  /* ── SVG dimension-based zoom ── */
+
+  // In fullscreen, auto-fit the diagram to fill ~92% of viewport (minus padding)
+  const [fitScale, setFitScale] = useState(1);
+  useEffect(() => {
+    if (!isFullscreen) {
+      setFitScale(1);
+      return;
+    }
+    const updateFit = () => {
+      const meta = svgMetaRef.current;
+      if (!meta) return;
+      const availW = window.innerWidth - 80;   // 40px padding each side
+      const availH = window.innerHeight - 80;
+      const fs = Math.min(
+        (availW * 0.92) / meta.width,
+        (availH * 0.92) / meta.height,
+      );
+      setFitScale(Math.max(fs, 0.5));
+    };
+    updateFit();
+    window.addEventListener('resize', updateFit);
+    return () => window.removeEventListener('resize', updateFit);
+  }, [isFullscreen]);
+
+  // Display scale = fit-to-screen × user zoom
+  const displayScale = fitScale * userScale;
+
+  // Build zoomed SVG by adjusting width/height attributes (keeps vector crisp)
+  const zoomedSvg = useMemo(() => {
+    if (!svg || !svgMetaRef.current) return svg ?? '';
+    const { width, height } = svgMetaRef.current;
+    const newW = width * displayScale;
+    const newH = height * displayScale;
+    return svg
+      .replace(/width="([^"]+)"/, `width="${newW}"`)
+      .replace(/height="([^"]+)"/, `height="${newH}"`);
+  }, [svg, displayScale]);
+
+  /* ── Zoom & Pan ── */
+  const clampScale = (s: number) => Math.max(0.3, Math.min(20, s));
+
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY < 0 ? 0.2 : -0.2;
+    setUserScale((s) => clampScale(s + delta));
+  }, []);
+
+  const canPan = displayScale > fitScale * 1.05;
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (canPan) {
+        setIsPanning(true);
+        lastMouseRef.current = { x: e.clientX, y: e.clientY };
+      }
+    },
+    [canPan],
+  );
+
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (!isPanning || !lastMouseRef.current) return;
+      const dx = e.clientX - lastMouseRef.current.x;
+      const dy = e.clientY - lastMouseRef.current.y;
+      lastMouseRef.current = { x: e.clientX, y: e.clientY };
+      setPan((prev) => ({ x: prev.x + dx, y: prev.y + dy }));
+    },
+    [isPanning],
+  );
+
+  const handleMouseUp = useCallback(() => {
+    setIsPanning(false);
+    lastMouseRef.current = null;
+  }, []);
+
+  const zoomIn = useCallback(() => setUserScale((s) => clampScale(s + 0.3)), []);
+  const zoomOut = useCallback(() => setUserScale((s) => clampScale(s - 0.3)), []);
+  const resetZoom = useCallback(() => {
+    setUserScale(1);
+    setPan({ x: 0, y: 0 });
+  }, []);
+
+  /* ── reset zoom when diagram changes ── */
+  useEffect(() => {
+    if (svg) {
+      setUserScale(1);
+      setPan({ x: 0, y: 0 });
+    }
+  }, [svg]);
+
+  /* ── derived state ── */
+  const isZoomed = displayScale !== fitScale;
+  const toolbarVisible = hovered || isFullscreen;
+
+  /* ── loading / error states ── */
   if (error) {
     return (
       <div className={mermaidErrorStyle}>
@@ -281,11 +561,59 @@ function MermaidDiagram({ code }: MermaidDiagramProps) {
     );
   }
 
+  /* ── normal render ── */
   return (
     <div
-      className={mermaidStyle}
-      dangerouslySetInnerHTML={{ __html: svg }}
-    />
+      ref={containerRef}
+      className={mermaidContainerStyle}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => {
+        setHovered(false);
+        handleMouseUp();
+      }}
+    >
+      <div
+        className={mermaidViewportStyle}
+        onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+      >
+        {/* Pan layer: only translate, never scale — keeps SVG vector-crisp */}
+        <div
+          className={mermaidTransformStyle}
+          style={{
+            transform: canPan ? `translate(${pan.x}px, ${pan.y}px)` : undefined,
+            cursor: isPanning ? 'grabbing' : canPan ? 'grab' : 'default',
+          }}
+          dangerouslySetInnerHTML={{ __html: zoomedSvg }}
+        />
+      </div>
+
+      <div
+        className={cx(mermaidToolbarStyle, toolbarVisible ? mermaidToolbarVisibleStyle : undefined)}
+        onWheel={(e) => e.stopPropagation()}
+      >
+        <IconButton size="sm" tooltip="放大" onClick={zoomIn}>
+          <ZoomInIcon />
+        </IconButton>
+        <IconButton size="sm" tooltip="缩小" onClick={zoomOut}>
+          <ZoomOutIcon />
+        </IconButton>
+        <IconButton size="sm" tooltip="重置缩放" onClick={resetZoom}>
+          <ResetZoomIcon />
+        </IconButton>
+        <IconButton size="sm" tooltip={isFullscreen ? '退出全屏' : '全屏'} onClick={toggleFullscreen}>
+          {isFullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
+        </IconButton>
+      </div>
+
+      {isZoomed && (
+        <div className={mermaidZoomBadgeStyle}>
+          {Math.round(userScale * 100)}%
+        </div>
+      )}
+    </div>
   );
 }
 
