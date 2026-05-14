@@ -1,9 +1,8 @@
 import { css, cx } from '@linaria/core';
-import { useState, useCallback } from 'react';
-import { useFileTree, useFileContent } from '@/context/file';
+import { useCallback, useState } from 'react';
+import { useFileTree } from '@/context/file';
+import { useFileTabs } from '@/context/file-tabs';
 import { FileTree } from '@/components/file/file-tree';
-import { FileViewer } from '@/components/file/file-viewer';
-import { DiffViewer } from '@/components/file/diff-viewer';
 import { SessionContextTab } from '@/components/session/session-context-tab';
 import { SessionReviewTab } from '@/components/session/session-review-tab';
 import type { FileNode, FileChange } from '@/types/file';
@@ -142,48 +141,6 @@ const statusBadgeBaseStyle = css`
   flex-shrink: 0;
 `;
 
-const viewerHeaderStyle = css`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-bg-tertiary);
-  flex-shrink: 0;
-`;
-
-const viewerFilePathStyle = css`
-  font-family: var(--haze-font-mono, monospace);
-  font-size: 12px;
-  color: var(--color-accent);
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
-
-const backBtnStyle = css`
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  border: none;
-  background: transparent;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  font-size: 12px;
-  flex-shrink: 0;
-  font-family: inherit;
-
-  &:hover {
-    background: var(--color-bg);
-    color: var(--color-text);
-  }
-`;
-
 const emptyStyle = css`
   flex: 1;
   display: flex;
@@ -225,22 +182,18 @@ export type SessionSidePanelProps = {
 export function SessionSidePanel({ onClose, className, messages, partsByMessage, session, sessionID, directory }: SessionSidePanelProps) {
   const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<SidePanelTab>('files');
-  const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const { gitStatus } = useFileTree();
+  const { openFile } = useFileTabs();
 
   const handleFileClick = useCallback((node: FileNode) => {
     if (node.type === 'file') {
-      setSelectedPath(node.path);
+      openFile(node.path);
     }
-  }, []);
-
-  const handleBack = useCallback(() => {
-    setSelectedPath(null);
-  }, []);
+  }, [openFile]);
 
   const handleChangeClick = useCallback((change: FileChange) => {
-    setSelectedPath(change.path);
-  }, []);
+    openFile(change.path);
+  }, [openFile]);
 
   return (
     <>
@@ -251,33 +204,24 @@ export function SessionSidePanel({ onClose, className, messages, partsByMessage,
             <button
               role="tab"
               className={tabButtonStyle}
-              data-active={activeTab === 'files' && !selectedPath}
-              onClick={() => {
-                setActiveTab('files');
-                setSelectedPath(null);
-              }}
+              data-active={activeTab === 'files'}
+              onClick={() => setActiveTab('files')}
             >
               {t('session.files')}
             </button>
             <button
               role="tab"
               className={tabButtonStyle}
-              data-active={activeTab === 'changes' && !selectedPath}
-              onClick={() => {
-                setActiveTab('changes');
-                setSelectedPath(null);
-              }}
+              data-active={activeTab === 'changes'}
+              onClick={() => setActiveTab('changes')}
             >
               {t('session.changes')}
             </button>
             <button
               role="tab"
               className={tabButtonStyle}
-              data-active={activeTab === 'context' && !selectedPath}
-              onClick={() => {
-                setActiveTab('context');
-                setSelectedPath(null);
-              }}
+              data-active={activeTab === 'context'}
+              onClick={() => setActiveTab('context')}
             >
               {t('session.context')}
             </button>
@@ -285,11 +229,8 @@ export function SessionSidePanel({ onClose, className, messages, partsByMessage,
               <button
                 role="tab"
                 className={tabButtonStyle}
-                data-active={activeTab === 'review' && !selectedPath}
-                onClick={() => {
-                  setActiveTab('review');
-                  setSelectedPath(null);
-                }}
+                data-active={activeTab === 'review'}
+                onClick={() => setActiveTab('review')}
               >
                 {t('session.review')}
               </button>
@@ -300,9 +241,7 @@ export function SessionSidePanel({ onClose, className, messages, partsByMessage,
           </button>
         </div>
         <div className={panelContentStyle}>
-          {selectedPath ? (
-            <FileViewerPanel path={selectedPath} onBack={handleBack} preferDiff={activeTab === 'changes'} onNavigateToFile={setSelectedPath} />
-          ) : activeTab === 'files' ? (
+          {activeTab === 'files' ? (
             <FileTree onFileClick={handleFileClick} />
           ) : activeTab === 'context' ? (
             <SessionContextTab
@@ -317,41 +256,6 @@ export function SessionSidePanel({ onClose, className, messages, partsByMessage,
           )}
         </div>
       </div>
-    </>
-  );
-}
-
-type FileViewerPanelProps = {
-  path: string;
-  onBack: () => void;
-  preferDiff?: boolean;
-  onNavigateToFile?: (path: string) => void;
-};
-
-function FileViewerPanel({ path, onBack, preferDiff = false, onNavigateToFile }: FileViewerPanelProps) {
-  const { t } = useI18n();
-  const fileState = useFileContent(path);
-
-  const patch = fileState?.content?.patch;
-  const diffText = fileState?.content?.diff;
-
-  const hasDiff = !!(patch ?? diffText);
-
-  return (
-    <>
-      <div className={viewerHeaderStyle}>
-        <button className={backBtnStyle} onClick={onBack} aria-label={t('common.back')}>
-          ←
-        </button>
-        <span className={viewerFilePathStyle}>{path}</span>
-      </div>
-      {preferDiff && hasDiff && diffText ? (
-        <div style={{ flex: 1, overflow: 'auto' }}>
-          <DiffViewer patch={diffText} filePath={path} showHeader={false} />
-        </div>
-      ) : (
-        <FileViewer path={path} maxHeight={Number.MAX_SAFE_INTEGER} onFileLinkClick={onNavigateToFile} />
-      )}
     </>
   );
 }

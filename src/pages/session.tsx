@@ -6,6 +6,7 @@ import { useSdk } from '@/context/sdk';
 import { usePrompt } from '@/context/prompt';
 import { useCommands } from '@/context/command';
 import { useNotification } from '@/context/notification';
+import { FileTabsProvider } from '@/context/file-tabs';
 import type { Message, MessageWithParts } from '@/types/message';
 import type { Part } from '@/types/part';
 import { SessionHeader } from '@/components/session/session-header';
@@ -16,6 +17,7 @@ import { SessionPermissionDock } from '@/components/session/session-permission-d
 import { SessionQuestionDock } from '@/components/session/session-question-dock';
 import { SessionTodoDock } from '@/components/session/session-todo-dock';
 import { TerminalPanel } from '@/components/terminal/terminal-panel';
+import { FilePanel } from '@/components/file/file-panel';
 import { Spinner } from '@/components/ui/spinner';
 import { useAgents } from '@/hooks/use-agents';
 import { useProviders } from '@/hooks/use-providers';
@@ -358,73 +360,77 @@ export function SessionPage() {
   }
 
   return (
-    <div className={sessionContainer}>
-      <SessionHeader
-        session={sessionData as import('@/types/session').Session | undefined}
-        onTitleChange={handleTitleChange}
-        tokenUsage={tokenUsage}
-        sidePanelOpen={sidePanelOpen}
-        terminalOpen={terminalOpen}
-        onToggleSidePanel={() => setSidePanelOpen(prev => !prev)}
-        onToggleTerminal={() => setTerminalOpen(prev => !prev)}
-        onToggleSidebar={onToggleSidebar}
-      />
-      {error && <div className={errorBanner}>{error}</div>}
-      <div className={sessionBodyStyle}>
-        <div className={messageAreaStyle}>
-          {loading ? (
-            <div className={loadingOverlay}>
-              <Spinner size="lg" color="muted" />
-              <span>Loading messages...</span>
-            </div>
-          ) : (
-            <MessageTimeline
+    <FileTabsProvider>
+      <div className={sessionContainer}>
+        <SessionHeader
+          session={sessionData as import('@/types/session').Session | undefined}
+          onTitleChange={handleTitleChange}
+          tokenUsage={tokenUsage}
+          sidePanelOpen={sidePanelOpen}
+          terminalOpen={terminalOpen}
+          onToggleSidePanel={() => setSidePanelOpen(prev => !prev)}
+          onToggleTerminal={() => setTerminalOpen(prev => !prev)}
+          onToggleSidebar={onToggleSidebar}
+        />
+        {error && <div className={errorBanner}>{error}</div>}
+        <div className={sessionBodyStyle}>
+          <div className={messageAreaStyle}>
+            <FilePanel>
+              {loading ? (
+                <div className={loadingOverlay}>
+                  <Spinner size="lg" color="muted" />
+                  <span>Loading messages...</span>
+                </div>
+              ) : (
+                <MessageTimeline
+                  messages={messages}
+                  partsByMessage={partsByMessage}
+                  streamingMessageID={isStreaming ? 'streaming' : undefined}
+                />
+              )}
+            </FilePanel>
+          </div>
+          {sidePanelOpen && (
+            <SessionSidePanel
+              onClose={() => setSidePanelOpen(false)}
               messages={messages}
               partsByMessage={partsByMessage}
-              streamingMessageID={isStreaming ? 'streaming' : undefined}
+              session={sessionData as import('@/types/session').Session | undefined}
+              sessionID={id}
+              directory={directory}
             />
           )}
         </div>
-        {sidePanelOpen && (
-          <SessionSidePanel
-            onClose={() => setSidePanelOpen(false)}
-            messages={messages}
-            partsByMessage={partsByMessage}
-            session={sessionData as import('@/types/session').Session | undefined}
-            sessionID={id}
+        <SessionTodoDock sessionId={id} />
+        <SessionPermissionDock sessionId={id} />
+        <SessionQuestionDock sessionId={id} />
+        <SessionComposer
+          value={prompt.getText()}
+          onChange={prompt.setText}
+          onSend={handleSend}
+          onStop={handleStop}
+          streaming={isStreaming}
+          placeholder={t('session.placeholder')}
+          agents={agents}
+          currentAgent={prompt.state.agent}
+          onAgentChange={prompt.setAgent}
+          models={models}
+          currentModel={prompt.state.model}
+          onModelChange={prompt.setModel}
+          reasoningEffort={prompt.state.reasoningEffort}
+          onReasoningEffortChange={prompt.setReasoningEffort}
+          onAttachFile={handleAttachFile}
+          modelSelectorTriggerRef={modelSelectorTriggerRef}
+        />
+        {terminalOpen && (
+          <TerminalPanel
+            height={terminalHeight}
+            onHeightChange={setTerminalHeight}
             directory={directory}
+            onClose={() => setTerminalOpen(false)}
           />
         )}
       </div>
-      <SessionTodoDock sessionId={id} />
-      <SessionPermissionDock sessionId={id} />
-      <SessionQuestionDock sessionId={id} />
-      <SessionComposer
-        value={prompt.getText()}
-        onChange={prompt.setText}
-        onSend={handleSend}
-        onStop={handleStop}
-        streaming={isStreaming}
-        placeholder={t('session.placeholder')}
-        agents={agents}
-        currentAgent={prompt.state.agent}
-        onAgentChange={prompt.setAgent}
-        models={models}
-        currentModel={prompt.state.model}
-        onModelChange={prompt.setModel}
-        reasoningEffort={prompt.state.reasoningEffort}
-        onReasoningEffortChange={prompt.setReasoningEffort}
-        onAttachFile={handleAttachFile}
-        modelSelectorTriggerRef={modelSelectorTriggerRef}
-      />
-      {terminalOpen && (
-        <TerminalPanel
-          height={terminalHeight}
-          onHeightChange={setTerminalHeight}
-          directory={directory}
-          onClose={() => setTerminalOpen(false)}
-        />
-      )}
-    </div>
+    </FileTabsProvider>
   );
 }

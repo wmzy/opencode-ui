@@ -2,6 +2,7 @@ import { css, cx } from '@linaria/core';
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { marked } from 'marked';
 import { IconButton } from '@/components/ui/icon-button';
+import { useOptionalFileTabs } from '@/context/file-tabs';
 import { CodeBlock } from './code-block';
 
 const renderer = new marked.Renderer();
@@ -461,7 +462,7 @@ function MermaidDiagram({ code }: MermaidDiagramProps) {
     const updateFit = () => {
       const meta = svgMetaRef.current;
       if (!meta) return;
-      const availW = window.innerWidth - 80;   // 40px padding each side
+      const availW = window.innerWidth - 80; // 40px padding each side
       const availH = window.innerHeight - 80;
       const fs = Math.min(
         (availW * 0.92) / meta.width,
@@ -630,12 +631,37 @@ export function MarkdownRenderer({ text, className, basePath, onFileLinkClick }:
   const [highlightedCode, setHighlightedCode] = useState<Record<number, string>>({});
   const mountedRef = useRef(true);
   const containerRef = useRef<HTMLDivElement>(null);
+  const fileTabsCtx = useOptionalFileTabs();
+  const handleFileLinkClick = onFileLinkClick ?? fileTabsCtx?.openFile;
 
   useEffect(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
     };
+  }, []);
+
+  const resolvePath = useCallback((href: string, basePath: string | undefined): string | null => {
+    try {
+      const decodedHref = decodeURIComponent(href);
+      if (decodedHref.startsWith('/') || decodedHref.startsWith('http://') || decodedHref.startsWith('https://')) {
+        return decodedHref;
+      }
+      if (!basePath) return null;
+      const baseDir = basePath.includes('/') ? basePath.substring(0, basePath.lastIndexOf('/')) : '';
+      const parts = baseDir ? `${baseDir}/${decodedHref}`.split('/') : decodedHref.split('/');
+      const stack: string[] = [];
+      for (const part of parts) {
+        if (part === '..') {
+          stack.pop();
+        } else if (part !== '.' && part !== '') {
+          stack.push(part);
+        }
+      }
+      return stack.join('/');
+    } catch {
+      return null;
+    }
   }, []);
 
   const handleClick = useCallback((e: React.MouseEvent) => {
@@ -659,31 +685,11 @@ export function MarkdownRenderer({ text, className, basePath, onFileLinkClick }:
       return;
     }
 
-    if (onFileLinkClick && basePath) {
-      try {
-        let resolved: string;
-        const decodedHref = decodeURIComponent(href);
-        if (decodedHref.startsWith('/') || decodedHref.startsWith('http://') || decodedHref.startsWith('https://')) {
-          resolved = decodedHref;
-        } else {
-          const baseDir = basePath.includes('/') ? basePath.substring(0, basePath.lastIndexOf('/')) : '';
-          const parts = baseDir ? `${baseDir}/${decodedHref}`.split('/') : decodedHref.split('/');
-          const stack: string[] = [];
-          for (const part of parts) {
-            if (part === '..') {
-              stack.pop();
-            } else if (part !== '.' && part !== '') {
-              stack.push(part);
-            }
-          }
-          resolved = stack.join('/');
-        }
-        onFileLinkClick(resolved);
-      } catch {
-        // ignore
-      }
+    if (handleFileLinkClick && basePath) {
+      const resolved = resolvePath(href, basePath);
+      if (resolved) handleFileLinkClick(resolved);
     }
-  }, [basePath, onFileLinkClick]);
+  }, [basePath, handleFileLinkClick, resolvePath]);
 
   useEffect(() => {
     let cancelled = false;
