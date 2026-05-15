@@ -8,26 +8,19 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        node-version: [24]
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@8912a9102ac27614460f54aedde9e1e7f9aec20d # v6.0.5
         with:
           version: 11
       - uses: actions/setup-node@v6
         with:
-          node-version: 22
-          cache: pnpm
-      - run: |
-          pnpm install --reporter verbose 2>&1 | tee /tmp/pnpm-install.log; exit ${PIPESTATUS[0]}
-        shell: bash
-      - name: Dump install log on failure
-        if: failure()
-        run: cat /tmp/pnpm-install.log
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: pnpm-install-log
-          path: /tmp/pnpm-install.log
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+      - run: pnpm install
       - run: pnpm lint
       - run: pnpm typecheck
