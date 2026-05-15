@@ -11,11 +11,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11
       - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: pnpm
-      - run: corepack enable && corepack prepare pnpm@11 --activate
-      - run: pnpm install
+      - run: |
+          pnpm install --reporter verbose 2>&1 | tee /tmp/pnpm-install.log
+          echo "EXIT_CODE=${PIPESTATUS[0]}"
+        shell: bash
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: pnpm-install-log
+          path: /tmp/pnpm-install.log
       - run: pnpm lint
       - run: pnpm typecheck
