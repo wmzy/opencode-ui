@@ -373,32 +373,30 @@ export function SessionPage() {
           onToggleTerminal={() => setTerminalOpen(prev => !prev)}
           onToggleSidebar={onToggleSidebar}
         />
-      {error && <div className={errorBanner}>{error}</div>}
-      <SessionBodyLayout
-        loading={loading}
-        sidePanelOpen={sidePanelOpen}
-        setSidePanelOpen={setSidePanelOpen}
-        messages={messages}
-        partsByMessage={partsByMessage}
-        session={sessionData}
-        id={id}
-        directory={directory}
-        isStreaming={isStreaming}
-        messageTimeline={
-          loading ? (
-            <div className={loadingOverlay}>
-              <Spinner size="lg" color="muted" />
-              <span>Loading messages...</span>
-            </div>
-          ) : (
-            <MessageTimeline
-              messages={messages}
-              partsByMessage={partsByMessage}
-              streamingMessageID={isStreaming ? 'streaming' : undefined}
-            />
-          )
-        }
-      />
+        {error && <div className={errorBanner}>{error}</div>}
+        <SessionBodyLayout
+          sidePanelOpen={sidePanelOpen}
+          setSidePanelOpen={setSidePanelOpen}
+          messages={messages}
+          partsByMessage={partsByMessage}
+          session={sessionData}
+          id={id}
+          directory={directory}
+          messageTimeline={
+            loading ? (
+              <div className={loadingOverlay}>
+                <Spinner size="lg" color="muted" />
+                <span>Loading messages...</span>
+              </div>
+            ) : (
+              <MessageTimeline
+                messages={messages}
+                partsByMessage={partsByMessage}
+                streamingMessageID={isStreaming ? 'streaming' : undefined}
+              />
+            )
+          }
+        />
         <SessionTodoDock sessionId={id} />
         <SessionPermissionDock sessionId={id} />
         <SessionQuestionDock sessionId={id} />
@@ -427,14 +425,13 @@ export function SessionPage() {
             directory={directory}
             onClose={() => setTerminalOpen(false)}
           />
-      )}
-    </div>
+        )}
+      </div>
     </FileTabsProvider>
   );
 }
 
 function SessionBodyLayout({
-  loading,
   sidePanelOpen,
   setSidePanelOpen,
   messages,
@@ -442,10 +439,8 @@ function SessionBodyLayout({
   session,
   id,
   directory,
-  isStreaming,
   messageTimeline,
 }: {
-  loading: boolean;
   sidePanelOpen: boolean;
   setSidePanelOpen: (v: boolean) => void;
   messages: import('@/types/message').Message[];
@@ -453,7 +448,6 @@ function SessionBodyLayout({
   session: unknown;
   id?: string;
   directory?: string;
-  isStreaming: boolean;
   messageTimeline: React.ReactNode;
 }) {
   const { tabs } = useFileTabs();
