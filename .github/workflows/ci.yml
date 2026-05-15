@@ -19,9 +19,11 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: |
-          pnpm install --reporter verbose 2>&1 | tee /tmp/pnpm-install.log
-          echo "EXIT_CODE=${PIPESTATUS[0]}"
+          pnpm install --reporter verbose 2>&1 | tee /tmp/pnpm-install.log; exit ${PIPESTATUS[0]}
         shell: bash
+      - name: Dump install log on failure
+        if: failure()
+        run: cat /tmp/pnpm-install.log
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
