@@ -17,9 +17,6 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    strategy:
-      matrix:
-        node-version: [24]
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@8912a9102ac27614460f54aedde9e1e7f9aec20d # v6.0.5
@@ -27,8 +24,8 @@ jobs:
           version: 11
       - uses: actions/setup-node@v6
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: "pnpm"
+          node-version: 24
+      - run: pnpm config set store-dir .pnpm-store
       - run: pnpm install
       - run: pnpm build
         env:
