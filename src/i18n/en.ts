@@ -208,6 +208,11 @@ registerTranslations('en', {
 
   'notification.clear': 'Clear',
 
+  'directory.folders': 'Folders',
+  'directory.no_results': 'No matching directories',
+  'directory.recent': 'Recent',
+  'directory.search_placeholder': 'Search directories...',
+
   'project.close': 'Close',
   'project.edit': 'Edit',
   'project.name': 'Project Name',

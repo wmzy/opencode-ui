@@ -7,6 +7,7 @@ import { useI18n } from '@/context/language';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { SelectDirectoryDialog } from '@/components/dialog/select-directory';
 import type { Project } from '@/types/project';
 
 const homeContainer = css`
@@ -394,6 +395,7 @@ export function HomePage() {
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dirPickerOpen, setDirPickerOpen] = useState(false);
 
   useEffect(() => {
     if (status !== 'connected') {
@@ -498,6 +500,12 @@ export function HomePage() {
         <div className={emptyState}>No projects found</div>
       )}
 
+      {status === 'connected' && (
+        <Button variant="secondary" onClick={() => setDirPickerOpen(true)}>
+          {t('project.open')}
+        </Button>
+      )}
+
       {status === 'connected' && !loading && projects.length > 0 && (
         <div className={projectList}>
           {projects.map((project, i) => (
@@ -531,6 +539,16 @@ export function HomePage() {
       {(status === 'disconnected' || status === 'error') && (
         <ServerConnectForm />
       )}
+
+      <SelectDirectoryDialog
+        open={dirPickerOpen}
+        onClose={() => setDirPickerOpen(false)}
+        onSelect={(path) => {
+          const dir = btoa(path);
+          navigate(`/${dir}/session`);
+          setDirPickerOpen(false);
+        }}
+      />
     </div>
   );
 }

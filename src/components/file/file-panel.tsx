@@ -1,14 +1,14 @@
 import { css, cx } from '@linaria/core';
-import { useCallback, type ReactNode } from 'react';
+import { useCallback } from 'react';
 import { useFileTabs } from '@/context/file-tabs';
 import { FileViewer } from './file-viewer';
 import { IconButton } from '@/components/ui/icon-button';
 
-const panelStyle = css`
+const panelOuterStyle = css`
   display: flex;
   flex-direction: column;
   min-height: 0;
-  flex: 1;
+  background: var(--color-bg);
 `;
 
 const tabBarStyle = css`
@@ -81,48 +81,19 @@ const spacerStyle = css`
   flex: 1;
 `;
 
-const chatTabStyle = css`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
-  font-size: 12px;
-  font-weight: 500;
-  border-radius: 4px 4px 0 0;
-  border: none;
-  background: transparent;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: background 0.1s, color 0.1s;
-
-  &:hover {
-    background: var(--color-bg);
-    color: var(--color-text);
-  }
-
-  &[data-active='true'] {
-    background: var(--color-bg);
-    color: var(--color-text);
-    box-shadow: inset 0 -1.5px 0 var(--color-accent);
-  }
-`;
-
 function getShortName(path: string): string {
   const parts = path.split('/');
   return parts[parts.length - 1] ?? path;
 }
 
 export type FilePanelProps = {
-  children: ReactNode;
   className?: string;
+  style?: React.CSSProperties;
 };
 
-export function FilePanel({ children, className }: FilePanelProps) {
+export function FilePanel({ className, style }: FilePanelProps) {
   const { tabs, activePath, closeFile, setActiveFile, closeAll } = useFileTabs();
   const showingFiles = tabs.length > 0;
-  const isChatActive = !activePath;
 
   const handleTabClose = useCallback(
     (e: React.MouseEvent, path: string) => {
@@ -139,20 +110,11 @@ export function FilePanel({ children, className }: FilePanelProps) {
     [setActiveFile],
   );
 
-  if (!showingFiles) {
-    return <>{children}</>;
-  }
+  if (!showingFiles) return null;
 
   return (
-    <div className={cx(panelStyle, className)}>
+    <div className={cx(panelOuterStyle, className)} style={style}>
       <div className={tabBarStyle}>
-        <button
-          className={chatTabStyle}
-          data-active={isChatActive}
-          onClick={() => setActiveFile(null)}
-        >
-          Chat
-        </button>
         {tabs.map((tab) => (
           <button
             key={tab.path}
@@ -182,16 +144,14 @@ export function FilePanel({ children, className }: FilePanelProps) {
         </IconButton>
       </div>
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
         {activePath ? (
           <FileViewer
             path={activePath}
             maxHeight={Number.MAX_SAFE_INTEGER}
             onFileLinkClick={handleFileLinkClick}
           />
-        ) : (
-          children
-        )}
+        ) : null}
       </div>
     </div>
   );

@@ -6,7 +6,8 @@ import { useSdk } from '@/context/sdk';
 import { usePrompt } from '@/context/prompt';
 import { useCommands } from '@/context/command';
 import { useNotification } from '@/context/notification';
-import { FileTabsProvider } from '@/context/file-tabs';
+import { useFileTabs, FileTabsProvider } from '@/context/file-tabs';
+import { ResizeHandle } from '@/components/ui/resize-handle';
 import type { Message, MessageWithParts } from '@/types/message';
 import type { Part } from '@/types/part';
 import { SessionHeader } from '@/components/session/session-header';
@@ -372,35 +373,32 @@ export function SessionPage() {
           onToggleTerminal={() => setTerminalOpen(prev => !prev)}
           onToggleSidebar={onToggleSidebar}
         />
-        {error && <div className={errorBanner}>{error}</div>}
-        <div className={sessionBodyStyle}>
-          <div className={messageAreaStyle}>
-            <FilePanel>
-              {loading ? (
-                <div className={loadingOverlay}>
-                  <Spinner size="lg" color="muted" />
-                  <span>Loading messages...</span>
-                </div>
-              ) : (
-                <MessageTimeline
-                  messages={messages}
-                  partsByMessage={partsByMessage}
-                  streamingMessageID={isStreaming ? 'streaming' : undefined}
-                />
-              )}
-            </FilePanel>
-          </div>
-          {sidePanelOpen && (
-            <SessionSidePanel
-              onClose={() => setSidePanelOpen(false)}
+      {error && <div className={errorBanner}>{error}</div>}
+      <SessionBodyLayout
+        loading={loading}
+        sidePanelOpen={sidePanelOpen}
+        setSidePanelOpen={setSidePanelOpen}
+        messages={messages}
+        partsByMessage={partsByMessage}
+        session={sessionData}
+        id={id}
+        directory={directory}
+        isStreaming={isStreaming}
+        messageTimeline={
+          loading ? (
+            <div className={loadingOverlay}>
+              <Spinner size="lg" color="muted" />
+              <span>Loading messages...</span>
+            </div>
+          ) : (
+            <MessageTimeline
               messages={messages}
               partsByMessage={partsByMessage}
-              session={sessionData as import('@/types/session').Session | undefined}
-              sessionID={id}
-              directory={directory}
+              streamingMessageID={isStreaming ? 'streaming' : undefined}
             />
-          )}
-        </div>
+          )
+        }
+      />
         <SessionTodoDock sessionId={id} />
         <SessionPermissionDock sessionId={id} />
         <SessionQuestionDock sessionId={id} />
@@ -429,8 +427,65 @@ export function SessionPage() {
             directory={directory}
             onClose={() => setTerminalOpen(false)}
           />
-        )}
-      </div>
+      )}
+    </div>
     </FileTabsProvider>
+  );
+}
+
+function SessionBodyLayout({
+  loading,
+  sidePanelOpen,
+  setSidePanelOpen,
+  messages,
+  partsByMessage,
+  session,
+  id,
+  directory,
+  isStreaming,
+  messageTimeline,
+}: {
+  loading: boolean;
+  sidePanelOpen: boolean;
+  setSidePanelOpen: (v: boolean) => void;
+  messages: import('@/types/message').Message[];
+  partsByMessage: Map<string, import('@/types/part').Part[]>;
+  session: unknown;
+  id?: string;
+  directory?: string;
+  isStreaming: boolean;
+  messageTimeline: React.ReactNode;
+}) {
+  const { tabs } = useFileTabs();
+  const showingFiles = tabs.length > 0;
+  const [filePanelWidth, setFilePanelWidth] = useState(480);
+
+  const handleResize = useCallback((delta: number) => {
+    setFilePanelWidth((prev) => {
+      const next = prev - delta;
+      return Math.max(300, Math.min(next, window.innerWidth * 0.5));
+    });
+  }, []);
+
+  return (
+    <div className={sessionBodyStyle}>
+      <div className={messageAreaStyle}>{messageTimeline}</div>
+      {showingFiles && (
+        <>
+          <ResizeHandle direction="vertical" onResize={handleResize} />
+          <FilePanel style={{ width: filePanelWidth, flexShrink: 0, minWidth: 0 }} />
+        </>
+      )}
+      {sidePanelOpen && (
+        <SessionSidePanel
+          onClose={() => setSidePanelOpen(false)}
+          messages={messages}
+          partsByMessage={partsByMessage}
+          session={session as import('@/types/session').Session | undefined}
+          sessionID={id}
+          directory={directory}
+        />
+      )}
+    </div>
   );
 }

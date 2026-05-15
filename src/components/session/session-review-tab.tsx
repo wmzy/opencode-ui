@@ -377,13 +377,13 @@ function ReviewDiffItem({ diff, isExpanded, onToggle }: ReviewDiffItemProps) {
       >
         <span className={diffTriggerLeftStyle}>
           {isNew && (
-             <span className={statusBadgeStyle} style={{ color: 'var(--color-success)' }}>A</span>
+            <span className={statusBadgeStyle} style={{ color: 'var(--color-success)' }}>A</span>
           )}
           {isDeleted && (
-             <span className={statusBadgeStyle} style={{ color: 'var(--color-error)' }}>D</span>
+            <span className={statusBadgeStyle} style={{ color: 'var(--color-error)' }}>D</span>
           )}
           {!isNew && !isDeleted && (
-             <span className={statusBadgeStyle} style={{ color: 'var(--color-warning)' }}>M</span>
+            <span className={statusBadgeStyle} style={{ color: 'var(--color-warning)' }}>M</span>
           )}
           {directory && (
             <span className={diffDirectoryStyle}>{`\u202A${directory}\u202C`}</span>

@@ -84,9 +84,9 @@ export interface OpenCodeSdk {
     status(opts?: RequestOptions): Promise<unknown[]>;
   };
   find: {
-    text(opts: RequestOptions & { pattern: string }): Promise<unknown[]>;
-    file(opts: RequestOptions & { query: string; dirs?: string; type?: string; limit?: number }): Promise<string[]>;
-    symbol(opts: RequestOptions & { query: string }): Promise<unknown[]>;
+    text(opts: Omit<RequestOptions, 'query'> & { pattern: string }): Promise<unknown[]>;
+    file(opts: Omit<RequestOptions, 'query'> & { query: string; dirs?: string; type?: string; limit?: number }): Promise<string[]>;
+    symbol(opts: Omit<RequestOptions, 'query'> & { query: string }): Promise<unknown[]>;
   };
   pty: {
     list(opts?: RequestOptions): Promise<unknown[]>;
@@ -362,8 +362,9 @@ export function createSdk(
     find: {
       text: (opts) =>
         request('GET', '/find', {
-          ...opts,
-          query: withDirectory({ ...opts?.query }),
+          signal: opts?.signal,
+          headers: opts?.headers,
+          query: withDirectory({ pattern: opts.pattern }),
         }),
       file: (opts) =>
         request('GET', '/find/file', {

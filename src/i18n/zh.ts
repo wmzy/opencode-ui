@@ -208,6 +208,11 @@ registerTranslations('zh', {
 
   'notification.clear': '清除',
 
+  'directory.folders': '文件夹',
+  'directory.no_results': '无匹配目录',
+  'directory.recent': '最近',
+  'directory.search_placeholder': '搜索目录...',
+
   'project.close': '关闭',
   'project.edit': '编辑',
   'project.name': '项目名称',
